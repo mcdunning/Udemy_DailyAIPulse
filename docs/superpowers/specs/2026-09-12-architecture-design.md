@@ -99,6 +99,24 @@ Per feature, contains:
 - **Kotlin Coroutines** for all asynchronous work — API calls and any data processing/mapping. Repository functions are `suspend fun`.
 - **StateFlow** carries UI state from ViewModel to Compose UI.
 
+## Tech Stack
+
+**Generic:** Hilt, Kotlin Coroutines, Timber
+
+**UI:** Jetpack Compose, Material 3, Navigation Compose, Hilt Navigation Compose, StateFlow
+
+**Presentation:** StateFlow
+
+**Data:** Retrofit, Moshi + Moshi Kotlin codegen, OkHttp, OkHttp logging interceptor
+
+**Testing:** not yet defined — deferred to a later design session.
+
+### Supporting Pieces Required (Not Separate Choices, But Easy to Miss)
+
+- **Gradle plugins:** Hilt Android Gradle plugin; KSP (Hilt and Moshi codegen both use KSP, not kapt); `org.jetbrains.kotlin.plugin.serialization` — required for Navigation Compose's type-safe route arguments, which use `kotlinx.serialization`. This is a *separate* serialization mechanism from Moshi: Moshi handles API JSON only, kotlinx.serialization handles nav route args only.
+- **Connective libraries:** `com.squareup.retrofit2:converter-moshi` (bridges Retrofit ↔ Moshi), `org.jetbrains.kotlinx:kotlinx-serialization-json` (nav routes), `org.jetbrains.kotlinx:kotlinx-coroutines-android` (Android dispatcher support), `com.google.dagger:hilt-android-compiler` (via ksp), `androidx.lifecycle:lifecycle-runtime-compose` (for `collectAsStateWithLifecycle()`).
+- **Manifest/code, not a dependency:** `INTERNET` permission in `AndroidManifest.xml`; a custom `Application` class annotated `@HiltAndroidApp`, registered in the manifest.
+
 ## Testing
 
 Each layer is independently testable given the separation above:
@@ -112,3 +130,4 @@ Each layer is independently testable given the separation above:
 
 1. API/backend choice for Article List and Source List.
 2. Location of the `ArticleData → Article` (data-model → presentation-model) mapping — Repository vs. ViewModel.
+3. Testing library choices (e.g. MockK, Turbine, kotlinx-coroutines-test).

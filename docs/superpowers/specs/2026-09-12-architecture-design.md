@@ -85,7 +85,13 @@ Per feature, contains:
 - **Repository** (e.g. `ArticleRepository`) — a single **concrete class**, not an interface/impl pair. Calls the Retrofit API service directly (no separate remote-data-source wrapper). Functions are `suspend fun`, using Kotlin Coroutines.
 - **Hilt module** (e.g. `ArticleModule`) — provides this feature's `ApiService` and `Repository`.
 
-**Open decision:** the actual API/backend for Article List and Source List has not yet been chosen.
+## External APIs
+
+**Provider: [NewsAPI.org](https://newsapi.org/)**, used by Article List and (likely) Source List. Endpoint-level detail (exact routes, query params, response shape) belongs in each feature's own design spec, not here — this section covers only what's cross-cutting.
+
+- **Authentication:** API key stored as `NEWS_API_KEY` in the developer's **global** `~/.gradle/gradle.properties` (outside the repo, never committed) and exposed to app code via a `BuildConfig` field (implemented — see `app/build.gradle.kts`).
+- **Known constraint:** NewsAPI's free "Developer" plan restricts key usage to `localhost` — it explicitly disallows use from a live/distributed app. Accepted for now since this is a learning project; revisit (paid plan or backend proxy) before any real distribution.
+- **Open decision:** how the key is attached to each request — a `@Query("apiKey")` parameter per Retrofit method, vs. a shared OkHttp interceptor (in `core/network`) that attaches it automatically to every NewsAPI request. This is cross-cutting (affects every feature calling NewsAPI), so it's decided once, here, rather than per-feature. Deferred.
 
 ## Dependency Injection
 
@@ -153,6 +159,9 @@ Each layer is independently testable given the separation above:
 
 ## Open Items Carried Into Feature Specs
 
-1. API/backend choice for Article List and Source List.
-2. Location of the `ArticleData → Article` (data-model → presentation-model) mapping — Repository vs. ViewModel.
+1. How the NewsAPI key is attached to requests — query param vs. shared OkHttp interceptor.
+2. Location of the `<Data model> → <Presentation model>` mapping (e.g. `ArticleData → Article`) — Repository vs. ViewModel. This is a per-feature pattern question; each feature spec should state its own answer.
 3. Testing library choices (e.g. MockK, Turbine, kotlinx-coroutines-test).
+
+Feature-specific details (exact endpoints, request params, response shapes) live in each feature's own design spec:
+- Article List: `docs/superpowers/specs/2026-09-12-article-list-design.md`

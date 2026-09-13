@@ -75,7 +75,7 @@ Per feature, contains:
 
 State is exposed from ViewModel to Compose via **`StateFlow`** (e.g. `StateFlow<ArticleListUiState>`), collected in the Composable via `collectAsStateWithLifecycle()`.
 
-**Open decision:** whether the mapping from the data layer's model (e.g. `ArticleData`) to the presentation model (e.g. `Article`) happens inside the Repository (`data/`) or inside the ViewModel. Deferred until the API is chosen and reviewed.
+Whether the mapping from the data layer's model (e.g. `ArticleData`) to the presentation model (e.g. `Article`) happens inside the Repository (`data/`) or inside the ViewModel is a **per-feature decision** — each feature spec states its own answer (Article List: mapping happens in the ViewModel, since the Repository returns the data-layer model directly).
 
 ### Data Layer (`data/`)
 
@@ -91,7 +91,7 @@ Per feature, contains:
 
 - **Authentication:** API key stored as `NEWS_API_KEY` in the developer's **global** `~/.gradle/gradle.properties` (outside the repo, never committed) and exposed to app code via a `BuildConfig` field (implemented — see `app/build.gradle.kts`).
 - **Known constraint:** NewsAPI's free "Developer" plan restricts key usage to `localhost` — it explicitly disallows use from a live/distributed app. Accepted for now since this is a learning project; revisit (paid plan or backend proxy) before any real distribution.
-- **Open decision:** how the key is attached to each request — a `@Query("apiKey")` parameter per Retrofit method, vs. a shared OkHttp interceptor (in `core/network`) that attaches it automatically to every NewsAPI request. This is cross-cutting (affects every feature calling NewsAPI), so it's decided once, here, rather than per-feature. Deferred.
+- **Key attachment:** a shared OkHttp interceptor in `core/network` attaches the key automatically to every NewsAPI request (rather than a `@Query("apiKey")` parameter repeated on each Retrofit method). Decided once here since it's cross-cutting — applies to every feature calling NewsAPI. Each feature's API service interface should carry a comment noting that auth happens via this interceptor, since it's otherwise invisible from the interface alone.
 
 ## Dependency Injection
 
@@ -99,6 +99,53 @@ Per feature, contains:
 
 - Per-feature Hilt modules live inside that feature's own `data/` package (e.g. `articles/data/ArticleModule.kt`).
 - `core/di/` holds only shared, app-wide providers: the Retrofit instance, `OkHttpClient`, base network config.
+
+### `core/network` — Auth Interceptor
+
+```kotlin
+class NewsApiKeyInterceptor : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val request = chain.request().newBuilder()
+            .addHeader("X-Api-Key", BuildConfig.NEWS_API_KEY)
+            .build()
+        return chain.proceed(request)
+    }
+}
+```
+
+Attaches the NewsAPI key as an `X-Api-Key` header to every request — this is what "key attachment via interceptor" (decided above) actually is.
+
+### `core/di` — `NetworkModule`
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(NewsApiKeyInterceptor())
+            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideMoshi(): Moshi = Moshi.Builder().build()
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit =
+        Retrofit.Builder()
+            .baseUrl("https://newsapi.org/")
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+}
+```
+
+Shared across every feature that calls NewsAPI — a feature's own Hilt module (e.g. `ArticleModule`) takes the `Retrofit` this provides and builds its feature-specific API service from it.
 
 ## Async & State Management
 
@@ -109,19 +156,20 @@ Per feature, contains:
 
 **Generic:** Hilt, Kotlin Coroutines, Timber
 
-**UI:** Jetpack Compose, Material 3, Navigation Compose, Hilt Navigation Compose, StateFlow
+**UI:** Jetpack Compose, Material 3, Navigation Compose, Hilt Navigation Compose, StateFlow, Coil (image loading)
 
 **Presentation:** StateFlow
 
 **Data:** Retrofit, Moshi + Moshi Kotlin codegen, OkHttp, OkHttp logging interceptor
 
-**Testing:** not yet defined — deferred to a later design session.
+**Testing:** MockK (mocking — chosen over Mockito since our Repository classes are concrete, not interfaces, and MockK mocks concrete Kotlin classes/`suspend fun`s cleanly), kotlinx-coroutines-test (`runTest`/test dispatchers for `suspend fun` and `viewModelScope` code), Turbine (asserting `StateFlow` emission sequences). Compose UI testing already covered by the project template's `androidx-compose-ui-test-junit4`/`androidx-espresso-core`/`androidx-junit`. `hilt-android-testing` intentionally deferred — our ViewModel/Repository are plain constructor-injected classes, unit-testable without swapping the Hilt DI graph.
 
 ### Supporting Pieces Required (Not Separate Choices, But Easy to Miss)
 
 - **Gradle plugins:** Hilt Android Gradle plugin; KSP (Hilt and Moshi codegen both use KSP, not kapt); `org.jetbrains.kotlin.plugin.serialization` — required for Navigation Compose's type-safe route arguments, which use `kotlinx.serialization`. This is a *separate* serialization mechanism from Moshi: Moshi handles API JSON only, kotlinx.serialization handles nav route args only.
 - **Connective libraries:** `com.squareup.retrofit2:converter-moshi` (bridges Retrofit ↔ Moshi), `org.jetbrains.kotlinx:kotlinx-serialization-json` (nav routes), `org.jetbrains.kotlinx:kotlinx-coroutines-android` (Android dispatcher support), `com.google.dagger:hilt-android-compiler` (via ksp), `androidx.lifecycle:lifecycle-runtime-compose` (for `collectAsStateWithLifecycle()`).
 - **Manifest/code, not a dependency:** `INTERNET` permission in `AndroidManifest.xml`; a custom `Application` class annotated `@HiltAndroidApp`, registered in the manifest. (Not yet added — needed once a feature actually wires up Hilt/networking.)
+- **Core library desugaring:** `minSdk = 24` is below API 26, which is required to use `java.time` (`Instant`, `Duration`, `DateTimeFormatter`) natively. Rather than avoiding `java.time` or adding a separate date library, this project uses **core library desugaring** — Google's standard recommendation for exactly this situation — via the `com.android.tools:desugar_jdk_libs` dependency (`coreLibraryDesugaring` configuration) plus `isCoreLibraryDesugaringEnabled = true` in `compileOptions`. No app code needs to know it's happening.
 
 ### Resolved Dependency Versions (added 2026-09-12)
 
@@ -141,6 +189,11 @@ Added to `gradle/libs.versions.toml`, `build.gradle.kts`, and `app/build.gradle.
 | Moshi (`moshi`, `moshi-kotlin-codegen`) | 1.15.2 |
 | OkHttp (`okhttp`, `logging-interceptor`) | 4.12.0 |
 | Timber | 5.0.1 |
+| Coil (`coil-compose`, `coil-network-okhttp`) | 3.6.2 |
+| Core library desugaring (`com.android.tools:desugar_jdk_libs`) | 2.1.5 |
+| MockK | 1.14.11 |
+| Turbine | 1.2.1 |
+| kotlinx-coroutines-test | 1.10.2 (matches `kotlinx-coroutines-android`, pinned for the same Kotlin-`2.2.10`-compatibility reason) |
 
 Two judgment calls worth flagging so they don't read as stale later:
 - **OkHttp/Retrofit** are pinned to `4.12.0`/`3.0.0` rather than OkHttp's still-alpha 5.x line — Retrofit's own latest stable (`3.0.0`) itself depends on OkHttp 4.12, so this keeps the pair aligned with what Retrofit was actually built and tested against.
@@ -157,11 +210,7 @@ Each layer is independently testable given the separation above:
 
 (Detailed test plans belong in each feature's own design spec, once that feature's behavior is fully defined.)
 
-## Open Items Carried Into Feature Specs
+## Feature Specs
 
-1. How the NewsAPI key is attached to requests — query param vs. shared OkHttp interceptor.
-2. Location of the `<Data model> → <Presentation model>` mapping (e.g. `ArticleData → Article`) — Repository vs. ViewModel. This is a per-feature pattern question; each feature spec should state its own answer.
-3. Testing library choices (e.g. MockK, Turbine, kotlinx-coroutines-test).
-
-Feature-specific details (exact endpoints, request params, response shapes) live in each feature's own design spec:
+Feature-specific details (exact endpoints, request params, response shapes, UI) live in each feature's own design spec:
 - Article List: `docs/superpowers/specs/2026-09-12-article-list-design.md`

@@ -115,7 +115,32 @@ Per feature, contains:
 
 - **Gradle plugins:** Hilt Android Gradle plugin; KSP (Hilt and Moshi codegen both use KSP, not kapt); `org.jetbrains.kotlin.plugin.serialization` — required for Navigation Compose's type-safe route arguments, which use `kotlinx.serialization`. This is a *separate* serialization mechanism from Moshi: Moshi handles API JSON only, kotlinx.serialization handles nav route args only.
 - **Connective libraries:** `com.squareup.retrofit2:converter-moshi` (bridges Retrofit ↔ Moshi), `org.jetbrains.kotlinx:kotlinx-serialization-json` (nav routes), `org.jetbrains.kotlinx:kotlinx-coroutines-android` (Android dispatcher support), `com.google.dagger:hilt-android-compiler` (via ksp), `androidx.lifecycle:lifecycle-runtime-compose` (for `collectAsStateWithLifecycle()`).
-- **Manifest/code, not a dependency:** `INTERNET` permission in `AndroidManifest.xml`; a custom `Application` class annotated `@HiltAndroidApp`, registered in the manifest.
+- **Manifest/code, not a dependency:** `INTERNET` permission in `AndroidManifest.xml`; a custom `Application` class annotated `@HiltAndroidApp`, registered in the manifest. (Not yet added — needed once a feature actually wires up Hilt/networking.)
+
+### Resolved Dependency Versions (added 2026-09-12)
+
+Added to `gradle/libs.versions.toml`, `build.gradle.kts`, and `app/build.gradle.kts`, verified via `./gradlew :app:dependencies` and `./gradlew :app:compileDebugKotlin` against this project's AGP `9.3.2` / Kotlin `2.2.10`:
+
+| Library | Version |
+|---|---|
+| Hilt (`hilt-android`, `hilt-android-compiler`, Hilt Gradle plugin) | 2.60.1 |
+| Hilt Navigation Compose (`androidx.hilt:hilt-navigation-compose`) | 1.4.0 |
+| Hilt Compiler (`androidx.hilt:hilt-compiler`) | 1.4.0 |
+| KSP (`com.google.devtools.ksp`) | 2.2.10-2.0.2 |
+| Navigation Compose (`androidx.navigation:navigation-compose`) | 2.10.1 |
+| Lifecycle Runtime Compose (`androidx.lifecycle:lifecycle-runtime-compose`) | 2.11.0 |
+| Kotlin Coroutines Android (`kotlinx-coroutines-android`) | 1.10.2 |
+| kotlinx-serialization-json | 1.9.0 |
+| Retrofit (`retrofit`, `converter-moshi`) | 3.0.0 |
+| Moshi (`moshi`, `moshi-kotlin-codegen`) | 1.15.2 |
+| OkHttp (`okhttp`, `logging-interceptor`) | 4.12.0 |
+| Timber | 5.0.1 |
+
+Two judgment calls worth flagging so they don't read as stale later:
+- **OkHttp/Retrofit** are pinned to `4.12.0`/`3.0.0` rather than OkHttp's still-alpha 5.x line — Retrofit's own latest stable (`3.0.0`) itself depends on OkHttp 4.12, so this keeps the pair aligned with what Retrofit was actually built and tested against.
+- **Coroutines/serialization** are pinned to `1.10.2`/`1.9.0` rather than each library's newest release (`1.11.0`/`1.11.0`), because those newest releases require a newer Kotlin (2.2.20 / 2.3.20 respectively) than this project declares (`2.2.10`).
+
+**Known build quirk:** this project's AGP uses **built-in Kotlin** compilation (no separate `org.jetbrains.kotlin.android` plugin needed/applied). The current KSP release doesn't yet fully support that mode — it still adds sources via the classic `kotlin.sourceSets` DSL, which built-in Kotlin rejects by default (a confirmed, still-open upstream issue: [google/ksp#2729](https://github.com/google/ksp/issues/2729)). `gradle.properties` sets `android.disallowKotlinSourceSets=false` to work around this — this is Android's own documented interim compatibility flag ([migrate-to-built-in-kotlin](https://developer.android.com/build/migrate-to-built-in-kotlin)), not an ad-hoc hack. Remove it once KSP ships proper built-in-Kotlin support.
 
 ## Testing
 

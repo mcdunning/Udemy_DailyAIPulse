@@ -37,10 +37,25 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Coil 3's coil-compose pulls in JetBrains Compose Multiplatform's
+        // `foundation`/`runtime` artifacts, which declare a Gradle
+        // module-metadata constraint requiring kotlin-stdlib 2.4.10. That's
+        // newer than this project's Kotlin compiler (2.2.10) can read
+        // (metadata format mismatch), breaking compileDebugKotlin. Force the
+        // stdlib back to the version matching the Kotlin plugin/compiler in
+        // use; the stdlib's own ABI is additive/backward-compatible, so this
+        // does not change runtime behavior.
+        force("org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}")
     }
 }
 
@@ -72,8 +87,14 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
 
     implementation(libs.timber)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

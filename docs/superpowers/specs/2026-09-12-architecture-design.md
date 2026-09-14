@@ -65,6 +65,7 @@ com.dailyaipulse/
 - Single-Activity app. Compose screens only — no business or state logic.
 - Screens render whatever `UiState` the ViewModel exposes; they don't make decisions.
 - Navigation via **Navigation Compose** (`androidx.navigation:navigation-compose`), not Navigation 3. Type-safe routes. The nav graph lives in its own file, `navigation/AppNavigation.kt`, not inline in `MainActivity`.
+- **Every Composable must have `@Preview` coverage.** **Added 2026-09-14**, from PR review — a guiding principle for the project: a developer should be able to review UI changes in the IDE's preview canvas without pushing to a device. For a screen split into a ViewModel-collecting wrapper (e.g. `ArticleListScreen`) and a stateless content composable (e.g. `ArticleListContent`) — see the Presentation Layer section — preview the stateless content composable, with one `@Preview` per meaningful `UiState` variant (loading, error, empty, success, pagination-loading, pagination-error, etc.). The thin wrapper itself typically isn't previewable, since `hiltViewModel()` can't resolve a real Hilt graph in a preview — that's expected, not a gap to work around.
 
 ### Presentation Layer (`presentation/`)
 
@@ -114,6 +115,34 @@ class NewsApiKeyInterceptor : Interceptor {
 ```
 
 Attaches the NewsAPI key as an `X-Api-Key` header to every request — this is what "key attachment via interceptor" (decided above) actually is.
+
+### `core/network` — Error Mapping
+
+**Added 2026-09-14**, from Article List's PR review: raw exception messages (e.g. `e.message`) were being shown directly to users — a technical/internal string, and one that gave no special handling to NewsAPI's rate limiting (HTTP 429), which came up during manual testing. This is cross-cutting (any feature calling NewsAPI can hit the same rate limit), so it lives here rather than per-feature:
+
+```kotlin
+private const val HTTP_TOO_MANY_REQUESTS = 429
+private const val RETRY_AFTER_HEADER = "Retry-After"
+
+// Never surfaces the raw exception message to the user (it's a developer-facing
+// string); logs the full exception via Timber first so it's still debuggable.
+fun Throwable.toUserMessage(): String {
+    Timber.e(this, "Network call failed")
+    return if (this is HttpException && code() == HTTP_TOO_MANY_REQUESTS) {
+        val retryAfterSeconds = response()?.headers()?.get(RETRY_AFTER_HEADER)?.toIntOrNull()
+        val instruction = if (retryAfterSeconds != null) {
+            "Please try again in $retryAfterSeconds seconds."
+        } else {
+            "Please try again later."
+        }
+        "You've made too many requests.\n$instruction"
+    } else {
+        "Something went wrong.\nPlease try again."
+    }
+}
+```
+
+Every feature's ViewModel should call `Throwable.toUserMessage()` in its catch blocks instead of using the raw exception message — this is the standing pattern for turning any network failure into UI-facing text, not just an Article List detail. **Updated 2026-09-14** (further PR review): the message is two lines (`\n`-separated) — a short description, then the retry instruction on its own line underneath — not one run-on sentence. When rendering this in Compose, center it (`textAlign = TextAlign.Center`) and give it `fillMaxWidth()`; without `fillMaxWidth()`, a wrapped multi-line `Text` still renders each line left-aligned even when the `Text` composable itself is positioned in the center of its parent.
 
 ### `core/di` — `NetworkModule`
 

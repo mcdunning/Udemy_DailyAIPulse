@@ -229,7 +229,7 @@ Notes:
 - `loadNextPage()` is a no-op if already loading more or not currently in `Success` — guards against duplicate pagination requests (e.g. fast scrolling).
 - Retrying after a pagination failure is just calling `loadNextPage()` again — no separate retry function.
 - `currentPage` only advances after a successful fetch, so a failed page load can be retried at the same page number.
-- Both catch blocks call `Throwable.toUserMessage()` (see architecture doc's `core/network` section) rather than exposing the raw exception message. **Added 2026-09-14**, from PR review: the raw message was a technical/internal string, not fit for end users, and gave no special treatment to NewsAPI rate-limiting (HTTP 429) — a real failure encountered during manual testing. `toUserMessage()` logs the full exception via Timber first (so it's still debuggable) and returns either a specific "too many requests, try again in N seconds" message (when NewsAPI's `Retry-After` header is present) or a generic "Something went wrong. Please try again." for everything else.
+- Both catch blocks call `Throwable.toUserMessage()` (see architecture doc's `core/network` section) rather than exposing the raw exception message. **Added 2026-09-14**, from PR review: the raw message was a technical/internal string, not fit for end users, and gave no special treatment to NewsAPI rate-limiting (HTTP 429) — a real failure encountered during manual testing. `toUserMessage()` logs the full exception via Timber first (so it's still debuggable) and returns a two-line (`\n`-separated) message: a short description, then the retry instruction underneath — either a specific "try again in N seconds" (when NewsAPI's `Retry-After` header is present) or a generic "try again later"/"try again" otherwise.
 
 ### formatDisplayDate
 
@@ -256,6 +256,8 @@ private fun formatDisplayDate(isoDate: String): String {
 Absolute format: `"MMM d, yyyy"` (e.g. `"Sep 12, 2026"`).
 
 ## UI Layer
+
+**Updated 2026-09-14** to match what was actually implemented: `ArticleListScreen` is split into itself (a thin wrapper that resolves the ViewModel and collects state) and `ArticleListContent` (a stateless composable driven entirely by `ArticleListUiState`). This isn't a conversational-doc simplification that got lost — it's required by the architecture doc's own testing/preview approach: a stateless composable is both testable with fixed `UiState` values (Compose UI testing, independent of ViewModel/data internals) and previewable (`@Preview`) without a Hilt graph. The original single-function sketch in this doc is kept below only as a record of the earlier version; the actual shape is `ArticleListItem` + `ArticleListContent` + `ArticleListScreen`.
 
 ### ArticleListItem
 
@@ -295,57 +297,75 @@ fun ArticleListItem(article: Article, modifier: Modifier = Modifier) {
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListItemPreview() {
+    ArticleListItem(
+        article = Article(
+            title = "Sample Headline About Technology",
+            description = "A short sample description of the article content, for preview purposes.",
+            imageUrl = null,
+            date = "Sep 13, 2026"
+        )
+    )
+}
 ```
 
-Image loaded via **Coil** (`AsyncImage`), fixed 180dp height, `ContentScale.Crop`.
+Image loaded via **Coil** (`AsyncImage`), fixed 180dp height, `ContentScale.Crop`. `imageUrl = null` in the preview simply renders no image (Coil doesn't make network calls inside `@Preview`) — that's expected, not a bug.
 
-### ArticleListScreen
+### ArticleListContent (stateless)
 
 ```kotlin
 @Composable
-fun ArticleListScreen(viewModel: ArticleListViewModel = hiltViewModel()) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Articles") }) }
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            when (val state = uiState) {
-                is ArticleListUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                is ArticleListUiState.Error -> {
-                    Text(text = state.message, modifier = Modifier.align(Alignment.Center))
-                }
-                is ArticleListUiState.Success -> {
-                    if (state.articles.isEmpty()) {
-                        Text(text = "No articles found", modifier = Modifier.align(Alignment.Center))
-                    } else {
-                        LazyColumn {
-                            itemsIndexed(state.articles) { index, article ->
-                                ArticleListItem(article)
-                                if (index == state.articles.lastIndex && !state.isLoadingMore) {
-                                    LaunchedEffect(Unit) { viewModel.loadNextPage() }
+fun ArticleListContent(
+    uiState: ArticleListUiState,
+    onLoadNextPage: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        when (uiState) {
+            is ArticleListUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center).testTag("fullScreenLoading")
+                )
+            }
+            is ArticleListUiState.Error -> {
+                Text(
+                    text = uiState.message,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = 24.dp)
+                )
+            }
+            is ArticleListUiState.Success -> {
+                if (uiState.articles.isEmpty()) {
+                    Text(
+                        text = "No articles found",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = 24.dp)
+                    )
+                } else {
+                    LazyColumn {
+                        itemsIndexed(uiState.articles) { index, article ->
+                            ArticleListItem(article)
+                            if (index == uiState.articles.lastIndex && !uiState.isLoadingMore) {
+                                LaunchedEffect(Unit) { onLoadNextPage() }
+                            }
+                        }
+                        if (uiState.isLoadingMore) {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.testTag("paginationLoading"))
                                 }
                             }
-                            if (state.isLoadingMore) {
-                                item {
-                                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-                            }
-                            if (state.paginationError != null) {
-                                item {
-                                    Text(
-                                        text = "Failed to load more — tap to retry",
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { viewModel.loadNextPage() }
-                                            .padding(16.dp)
-                                    )
-                                }
+                        }
+                        if (uiState.paginationError != null) {
+                            item {
+                                Text(
+                                    text = "Failed to load more — tap to retry",
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth().clickable { onLoadNextPage() }.padding(16.dp)
+                                )
                             }
                         }
                     }
@@ -356,11 +376,81 @@ fun ArticleListScreen(viewModel: ArticleListViewModel = hiltViewModel()) {
 }
 ```
 
-- Top bar title: "Articles".
 - `Loading` → centered `CircularProgressIndicator`, full screen.
-- `Error` → centered `Text(state.message)`, full screen.
-- `Success` with an empty list → centered `Text("No articles found")`, same styling as the `Error` text.
-- `Success` with articles → `LazyColumn` of `ArticleListItem`s. Pagination triggers when the last visible item composes (no scroll-position math needed), guarded by `!state.isLoadingMore` so it only fires once per page. `isLoadingMore`/`paginationError` render as trailing list items (spinner / tap-to-retry row) without disturbing the already-loaded content above them.
+- `Error` → centered, `fillMaxWidth()`, `textAlign = TextAlign.Center` — **fixed 2026-09-14**, PR review: without `fillMaxWidth()`, a multi-line message (see `toUserMessage()`'s two-line format above) rendered with its lines left-aligned even though the `Text` composable itself was centered as a block; `fillMaxWidth()` + `textAlign = Center` centers each line.
+- `Success` with an empty list → same centered/full-width/center-aligned treatment, `Text("No articles found")`.
+- `Success` with articles → `LazyColumn` of `ArticleListItem`s. Pagination triggers when the last visible item composes (no scroll-position math needed), guarded by `!uiState.isLoadingMore` so it only fires once per page. `isLoadingMore`/`paginationError` render as trailing list items (spinner / tap-to-retry row) without disturbing the already-loaded content above them.
+- Takes `onLoadNextPage: () -> Unit` rather than a `ViewModel` — this is what makes it previewable/testable with fixed `ArticleListUiState` values, per the architecture doc's `@Preview` guiding principle.
+
+**`@Preview` — one per meaningful state**, added 2026-09-14 per the architecture doc's guiding principle:
+
+```kotlin
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentLoadingPreview() {
+    ArticleListContent(uiState = ArticleListUiState.Loading, onLoadNextPage = {})
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentErrorPreview() {
+    ArticleListContent(uiState = ArticleListUiState.Error("Something went wrong.\nPlease try again."), onLoadNextPage = {})
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentEmptyPreview() {
+    ArticleListContent(uiState = ArticleListUiState.Success(articles = emptyList()), onLoadNextPage = {})
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentSuccessPreview() {
+    ArticleListContent(
+        uiState = ArticleListUiState.Success(articles = listOf(/* two sample Articles */)),
+        onLoadNextPage = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentLoadingMorePreview() {
+    ArticleListContent(
+        uiState = ArticleListUiState.Success(articles = listOf(/* one sample Article */), isLoadingMore = true),
+        onLoadNextPage = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentPaginationErrorPreview() {
+    ArticleListContent(
+        uiState = ArticleListUiState.Success(articles = listOf(/* one sample Article */), paginationError = "Failed to load more"),
+        onLoadNextPage = {}
+    )
+}
+```
+
+### ArticleListScreen (thin wrapper)
+
+```kotlin
+@Composable
+fun ArticleListScreen(viewModel: ArticleListViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Articles") }) }
+    ) { paddingValues ->
+        ArticleListContent(
+            uiState = uiState,
+            onLoadNextPage = viewModel::loadNextPage,
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
+        )
+    }
+}
+```
+
+Top bar title: "Articles". No `@Preview` here — `hiltViewModel()` can't resolve a real Hilt graph in a preview, which is expected (see the architecture doc's `@Preview` guiding principle); `ArticleListContent`'s previews above already cover every visual state this screen can show.
 
 The screen is **non-interactive for the MVP** — no tap action on articles. **Future update:** tapping an article to open the full article (would require adding `url` back to `ArticleData`/`Article`) is intentionally out of scope for now and left for a later iteration.
 

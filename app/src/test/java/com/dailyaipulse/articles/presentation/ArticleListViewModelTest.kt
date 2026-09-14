@@ -67,7 +67,7 @@ class ArticleListViewModelTest {
         viewModel.uiState.test {
             assertEquals(ArticleListUiState.Loading, awaitItem())
             val error = awaitItem() as ArticleListUiState.Error
-            assertEquals("Something went wrong. Please try again.", error.message)
+            assertEquals("Something went wrong.\nPlease try again.", error.message)
         }
     }
 
@@ -111,7 +111,7 @@ class ArticleListViewModelTest {
 
             val failed = awaitItem() as ArticleListUiState.Success
             assertFalse(failed.isLoadingMore)
-            assertEquals("Something went wrong. Please try again.", failed.paginationError)
+            assertEquals("Something went wrong.\nPlease try again.", failed.paginationError)
             assertEquals(1, failed.articles.size)
         }
     }

@@ -12,12 +12,13 @@ fun Throwable.toUserMessage(): String {
     Timber.e(this, "Network call failed")
     return if (this is HttpException && code() == HTTP_TOO_MANY_REQUESTS) {
         val retryAfterSeconds = response()?.headers()?.get(RETRY_AFTER_HEADER)?.toIntOrNull()
-        if (retryAfterSeconds != null) {
-            "You've made too many requests. Please try again in $retryAfterSeconds seconds."
+        val instruction = if (retryAfterSeconds != null) {
+            "Please try again in $retryAfterSeconds seconds."
         } else {
-            "You've made too many requests. Please try again later."
+            "Please try again later."
         }
+        "You've made too many requests.\n$instruction"
     } else {
-        "Something went wrong. Please try again."
+        "Something went wrong.\nPlease try again."
     }
 }

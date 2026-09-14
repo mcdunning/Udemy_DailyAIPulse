@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dailyaipulse.articles.presentation.Article
@@ -51,4 +52,17 @@ fun ArticleListItem(article: Article, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListItemPreview() {
+    ArticleListItem(
+        article = Article(
+            title = "Sample Headline About Technology",
+            description = "A short sample description of the article content, for preview purposes.",
+            imageUrl = null,
+            date = "Sep 13, 2026"
+        )
+    )
 }

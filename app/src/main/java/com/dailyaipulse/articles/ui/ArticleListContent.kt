@@ -15,7 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dailyaipulse.articles.presentation.Article
 import com.dailyaipulse.articles.presentation.ArticleListUiState
 
 @Composable
@@ -34,11 +36,25 @@ fun ArticleListContent(
                 )
             }
             is ArticleListUiState.Error -> {
-                Text(text = uiState.message, modifier = Modifier.align(Alignment.Center))
+                Text(
+                    text = uiState.message,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                )
             }
             is ArticleListUiState.Success -> {
                 if (uiState.articles.isEmpty()) {
-                    Text(text = "No articles found", modifier = Modifier.align(Alignment.Center))
+                    Text(
+                        text = "No articles found",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                    )
                 } else {
                     LazyColumn {
                         itemsIndexed(uiState.articles) { index, article ->
@@ -76,4 +92,67 @@ fun ArticleListContent(
             }
         }
     }
+}
+
+private val previewArticle = Article(
+    title = "Sample Headline About Technology",
+    description = "A short sample description of the article content, for preview purposes.",
+    imageUrl = null,
+    date = "Sep 13, 2026"
+)
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentLoadingPreview() {
+    ArticleListContent(uiState = ArticleListUiState.Loading, onLoadNextPage = {})
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentErrorPreview() {
+    ArticleListContent(
+        uiState = ArticleListUiState.Error("Something went wrong.\nPlease try again."),
+        onLoadNextPage = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentEmptyPreview() {
+    ArticleListContent(uiState = ArticleListUiState.Success(articles = emptyList()), onLoadNextPage = {})
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentSuccessPreview() {
+    ArticleListContent(
+        uiState = ArticleListUiState.Success(
+            articles = listOf(
+                previewArticle,
+                previewArticle.copy(title = "Second Sample Headline", date = "3h ago")
+            )
+        ),
+        onLoadNextPage = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentLoadingMorePreview() {
+    ArticleListContent(
+        uiState = ArticleListUiState.Success(articles = listOf(previewArticle), isLoadingMore = true),
+        onLoadNextPage = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentPaginationErrorPreview() {
+    ArticleListContent(
+        uiState = ArticleListUiState.Success(
+            articles = listOf(previewArticle),
+            paginationError = "Failed to load more"
+        ),
+        onLoadNextPage = {}
+    )
 }

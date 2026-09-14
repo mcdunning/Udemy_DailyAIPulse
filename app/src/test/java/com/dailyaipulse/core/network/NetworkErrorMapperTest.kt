@@ -30,7 +30,7 @@ class NetworkErrorMapperTest {
         val exception = httpException(code = 429, retryAfterSeconds = "120")
 
         assertEquals(
-            "You've made too many requests. Please try again in 120 seconds.",
+            "You've made too many requests.\nPlease try again in 120 seconds.",
             exception.toUserMessage()
         )
     }
@@ -40,7 +40,7 @@ class NetworkErrorMapperTest {
         val exception = httpException(code = 429)
 
         assertEquals(
-            "You've made too many requests. Please try again later.",
+            "You've made too many requests.\nPlease try again later.",
             exception.toUserMessage()
         )
     }
@@ -49,13 +49,13 @@ class NetworkErrorMapperTest {
     fun `maps a non-429 HTTP error to the generic message`() {
         val exception = httpException(code = 500)
 
-        assertEquals("Something went wrong. Please try again.", exception.toUserMessage())
+        assertEquals("Something went wrong.\nPlease try again.", exception.toUserMessage())
     }
 
     @Test
     fun `maps any other exception to the generic message`() {
         val exception = RuntimeException("some internal detail that shouldn't reach the user")
 
-        assertEquals("Something went wrong. Please try again.", exception.toUserMessage())
+        assertEquals("Something went wrong.\nPlease try again.", exception.toUserMessage())
     }
 }

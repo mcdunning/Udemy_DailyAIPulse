@@ -183,7 +183,7 @@ class ArticleListViewModel @Inject constructor(
                 val articles = articleRepository.getTopHeadlines(page = currentPage).map { it.toArticle() }
                 emit(ArticleListUiState.Success(articles = articles))
             } catch (e: Exception) {
-                emit(ArticleListUiState.Error(message = e.message ?: "Unknown error"))
+                emit(ArticleListUiState.Error(message = e.toUserMessage()))
             }
         }
     }
@@ -191,15 +191,20 @@ class ArticleListViewModel @Inject constructor(
     fun loadNextPage() {
         val state = _uiState.value
         if (state !is ArticleListUiState.Success || state.isLoadingMore) return
+        // isLoadingMore must be set synchronously (before launching), not inside the
+        // coroutine body: viewModelScope.launch defers actual execution until the
+        // dispatcher runs it, so a second synchronous call to loadNextPage() before
+        // that would still see the old (isLoadingMore = false) state and re-enter.
+        val loadingState = state.copy(isLoadingMore = true, paginationError = null)
+        emit(loadingState)
         viewModelScope.launch {
-            emit(state.copy(isLoadingMore = true, paginationError = null))
             val nextPage = currentPage + 1
             try {
                 val nextArticles = articleRepository.getTopHeadlines(page = nextPage).map { it.toArticle() }
                 currentPage = nextPage
-                emit(state.copy(articles = state.articles + nextArticles, isLoadingMore = false))
+                emit(loadingState.copy(articles = loadingState.articles + nextArticles, isLoadingMore = false))
             } catch (e: Exception) {
-                emit(state.copy(isLoadingMore = false, paginationError = e.message ?: "Failed to load more"))
+                emit(loadingState.copy(isLoadingMore = false, paginationError = e.toUserMessage()))
             }
         }
     }
@@ -220,9 +225,11 @@ class ArticleListViewModel @Inject constructor(
 
 Notes:
 - Every state change routes through the single `emit()` helper, guaranteeing the Timber log fires for every transition — no call site can forget it.
+- `isLoadingMore` is set synchronously, before `viewModelScope.launch` — since `launch` defers actual execution, two rapid, synchronous calls to `loadNextPage()` would otherwise both read the stale `isLoadingMore = false` state and both fire a request. This was caught during implementation (a test asserting "no-op while already loading more" failed against the original design), not anticipated during design.
 - `loadNextPage()` is a no-op if already loading more or not currently in `Success` — guards against duplicate pagination requests (e.g. fast scrolling).
 - Retrying after a pagination failure is just calling `loadNextPage()` again — no separate retry function.
 - `currentPage` only advances after a successful fetch, so a failed page load can be retried at the same page number.
+- Both catch blocks call `Throwable.toUserMessage()` (see architecture doc's `core/network` section) rather than exposing the raw exception message. **Added 2026-09-14**, from PR review: the raw message was a technical/internal string, not fit for end users, and gave no special treatment to NewsAPI rate-limiting (HTTP 429) — a real failure encountered during manual testing. `toUserMessage()` logs the full exception via Timber first (so it's still debuggable) and returns either a specific "too many requests, try again in N seconds" message (when NewsAPI's `Retry-After` header is present) or a generic "Something went wrong. Please try again." for everything else.
 
 ### formatDisplayDate
 

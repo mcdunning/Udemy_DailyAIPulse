@@ -115,6 +115,33 @@ class NewsApiKeyInterceptor : Interceptor {
 
 Attaches the NewsAPI key as an `X-Api-Key` header to every request — this is what "key attachment via interceptor" (decided above) actually is.
 
+### `core/network` — Error Mapping
+
+**Added 2026-09-14**, from Article List's PR review: raw exception messages (e.g. `e.message`) were being shown directly to users — a technical/internal string, and one that gave no special handling to NewsAPI's rate limiting (HTTP 429), which came up during manual testing. This is cross-cutting (any feature calling NewsAPI can hit the same rate limit), so it lives here rather than per-feature:
+
+```kotlin
+private const val HTTP_TOO_MANY_REQUESTS = 429
+private const val RETRY_AFTER_HEADER = "Retry-After"
+
+// Never surfaces the raw exception message to the user (it's a developer-facing
+// string); logs the full exception via Timber first so it's still debuggable.
+fun Throwable.toUserMessage(): String {
+    Timber.e(this, "Network call failed")
+    return if (this is HttpException && code() == HTTP_TOO_MANY_REQUESTS) {
+        val retryAfterSeconds = response()?.headers()?.get(RETRY_AFTER_HEADER)?.toIntOrNull()
+        if (retryAfterSeconds != null) {
+            "You've made too many requests. Please try again in $retryAfterSeconds seconds."
+        } else {
+            "You've made too many requests. Please try again later."
+        }
+    } else {
+        "Something went wrong. Please try again."
+    }
+}
+```
+
+Every feature's ViewModel should call `Throwable.toUserMessage()` in its catch blocks instead of using the raw exception message — this is the standing pattern for turning any network failure into UI-facing text, not just an Article List detail.
+
 ### `core/di` — `NetworkModule`
 
 ```kotlin

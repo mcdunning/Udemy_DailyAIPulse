@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailyaipulse.articles.data.ArticleData
 import com.dailyaipulse.articles.data.ArticleRepository
+import com.dailyaipulse.core.network.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +34,7 @@ class ArticleListViewModel @Inject constructor(
                 val articles = articleRepository.getTopHeadlines(page = currentPage).map { it.toArticle() }
                 emit(ArticleListUiState.Success(articles = articles))
             } catch (e: Exception) {
-                emit(ArticleListUiState.Error(message = e.message ?: "Unknown error"))
+                emit(ArticleListUiState.Error(message = e.toUserMessage()))
             }
         }
     }
@@ -54,7 +55,7 @@ class ArticleListViewModel @Inject constructor(
                 currentPage = nextPage
                 emit(loadingState.copy(articles = loadingState.articles + nextArticles, isLoadingMore = false))
             } catch (e: Exception) {
-                emit(loadingState.copy(isLoadingMore = false, paginationError = e.message ?: "Failed to load more"))
+                emit(loadingState.copy(isLoadingMore = false, paginationError = e.toUserMessage()))
             }
         }
     }

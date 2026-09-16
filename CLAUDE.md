@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Start here
+
+Read `docs/PROJECT_STATUS.md` first, at the start of any session — it's a running handoff summary (current state, files touched, mistakes to avoid, open problems) meant to be enough by itself to work productively without re-deriving context. Update it, following the rules at the top of that file, after finishing significant work (a feature, a merged PR, a major fix).
+
 ## Commands
 
 ```bash

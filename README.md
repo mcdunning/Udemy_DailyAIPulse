@@ -55,3 +55,4 @@ It's picked up automatically at build time and exposed as `BuildConfig.NEWS_API_
 - `docs/superpowers/specs/2026-09-12-architecture-design.md` — shared architecture, tech stack, cross-cutting conventions.
 - `docs/superpowers/specs/2026-09-12-article-list-design.md` — Article List feature spec.
 - `docs/superpowers/plans/2026-09-13-article-list-implementation.md` — Article List implementation plan.
+- `docs/superpowers/specs/2026-09-16-navigation-shell-design.md` — bottom navigation bar (Articles/Sources tabs) and Source List's blank placeholder screen.

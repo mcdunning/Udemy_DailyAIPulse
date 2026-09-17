@@ -14,7 +14,7 @@ Two top-level, equally-important destinations (Article List, Source List) is exa
 
 Tab order and labels, as directed: **"Articles"** (Article List) first, **"Sources"** (Source List) second.
 
-Icons: the project has no `material-icons-extended` dependency, and this doc doesn't add one — using what already ships in Compose Material's default icon set is enough and avoids a new dependency for two tab icons. `Icons.Filled.Home` for Articles, `Icons.AutoMirrored.Filled.List` for Sources.
+Icons: the project has no `material-icons-extended` dependency, and this doc doesn't add one. `Icons.Filled.Home` for Articles, `Icons.AutoMirrored.Filled.List` for Sources. **Updated 2026-09-16**, during implementation: `material3` does not transitively pull in even the base icon set — `androidx.compose.material:material-icons-core` (not `-extended`) had to be added explicitly as a new dependency, version-managed by the Compose BOM already in `app/build.gradle.kts`, to resolve `Icons.Filled.Home`/`Icons.AutoMirrored.Filled.List` at all.
 
 ## Package Layout
 

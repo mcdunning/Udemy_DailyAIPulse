@@ -8,7 +8,7 @@ Read `docs/PROJECT_STATUS.md` first, at the start of any session — it's a runn
 
 ## Workflow
 
-- **Design doc before code.** Every feature planning/brainstorming session must produce a written design doc under `docs/superpowers/specs/` that the user has explicitly approved before any code is written — even for changes that would otherwise look small or "bounded."
+- **Design doc before code.** Every feature planning/brainstorming session must produce a written design doc under `docs/superpowers/specs/` that the user has explicitly approved before any code is written — even for changes that would otherwise look small or "bounded." If the work is for an existing feature, update that feature's existing spec doc rather than creating a new one; create a new doc only when the work is for a genuinely new feature.
 - **Feature branch + PR, always.** All work happens on a feature branch; never commit directly to `main`. Open a PR and get it reviewed/approved before merging.
 - **Answer every PR review question on the PR.** When a reviewer leaves a question in a PR comment, reply to it directly on the PR (e.g. `gh pr comment`) — not only in chat with the user.
 

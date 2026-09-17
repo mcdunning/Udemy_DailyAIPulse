@@ -42,9 +42,9 @@ com.dailyaipulse/
 │   ├── presentation/  # ArticleListViewModel, ArticleListUiState, Article (presentation model)
 │   └── data/          # ArticleData, ArticleApiService, ArticleRepository, ArticleModule (Hilt)
 ├── sources/
-│   ├── ui/
-│   ├── presentation/
-│   └── data/
+│   ├── ui/            # SourceListScreen — currently a blank placeholder (added 2026-09-17)
+│   ├── presentation/  # not yet built — pending Source List's own design spec
+│   └── data/          # not yet built — pending Source List's own design spec
 ├── summary/
 │   ├── ui/
 │   ├── presentation/
@@ -64,7 +64,7 @@ com.dailyaipulse/
 
 - Single-Activity app. Compose screens only — no business or state logic.
 - Screens render whatever `UiState` the ViewModel exposes; they don't make decisions.
-- Navigation via **Navigation Compose** (`androidx.navigation:navigation-compose`), not Navigation 3. Type-safe routes. The nav graph lives in its own file, `navigation/AppNavigation.kt`, not inline in `MainActivity`.
+- Navigation via **Navigation Compose** — see the Navigation section below.
 - **Every Composable must have `@Preview` coverage.** **Added 2026-09-14**, from PR review — a guiding principle for the project: a developer should be able to review UI changes in the IDE's preview canvas without pushing to a device. For a screen split into a ViewModel-collecting wrapper (e.g. `ArticleListScreen`) and a stateless content composable (e.g. `ArticleListContent`) — see the Presentation Layer section — preview the stateless content composable, with one `@Preview` per meaningful `UiState` variant (loading, error, empty, success, pagination-loading, pagination-error, etc.). The thin wrapper itself typically isn't previewable, since `hiltViewModel()` can't resolve a real Hilt graph in a preview — that's expected, not a gap to work around.
 
 ### Presentation Layer (`presentation/`)
@@ -85,6 +85,62 @@ Per feature, contains:
 - **API service** (e.g. `ArticleApiService`) — a Retrofit interface; this is the remote data source. No local database or on-device storage.
 - **Repository** (e.g. `ArticleRepository`) — a single **concrete class**, not an interface/impl pair. Calls the Retrofit API service directly (no separate remote-data-source wrapper). Functions are `suspend fun`, using Kotlin Coroutines.
 - **Hilt module** (e.g. `ArticleModule`) — provides this feature's `ApiService` and `Repository`.
+
+## Navigation
+
+**Navigation Compose** (`androidx.navigation:navigation-compose`), not Navigation 3. Type-safe routes (`@Serializable object <Feature>Route`). The nav graph and any app-level navigation chrome live in one file, `navigation/AppNavigation.kt`, not inline in `MainActivity`.
+
+**Added 2026-09-17**, resolving the navigation-entry-point decision this doc originally left open: a Material 3 **bottom navigation bar** is the app's top-level navigation chrome, wrapping the `NavHost` in a `Scaffold`. It's the standard pattern for 2–5 equally-important, always-visible top-level destinations — the case this app is in (Article List, Source List, and potentially future top-level features). A top-bar icon was rejected for implying Source List is subordinate to Article List rather than a peer destination; a navigation drawer was rejected as overkill for only two destinations.
+
+Tab selection state comes from `currentBackStackEntryAsState()`. Switching tabs uses the standard Material bottom-nav navigation options — `popUpTo(graph.findStartDestination().id) { saveState = true }`, `launchSingleTop = true`, `restoreState = true` — so tab switches don't stack the back stack or lose each tab's own state:
+
+```kotlin
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+
+    Scaffold(
+        bottomBar = {
+            val backStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = backStackEntry?.destination
+
+            NavigationBar {
+                NavigationBarItem(
+                    selected = currentDestination?.hasRoute<ArticleListRoute>() == true,
+                    onClick = { navController.navigateToTab(ArticleListRoute) },
+                    icon = { Icon(Icons.Filled.Home, contentDescription = null) },
+                    label = { Text("Articles") }
+                )
+                NavigationBarItem(
+                    selected = currentDestination?.hasRoute<SourceListRoute>() == true,
+                    onClick = { navController.navigateToTab(SourceListRoute) },
+                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
+                    label = { Text("Sources") }
+                )
+            }
+        }
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = ArticleListRoute,
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            composable<ArticleListRoute> { ArticleListScreen() }
+            composable<SourceListRoute> { SourceListScreen() }
+        }
+    }
+}
+
+private fun <T : Any> NavController.navigateToTab(route: T) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+```
+
+`navigateToTab` is a small private helper local to `AppNavigation.kt` rather than a shared abstraction — it's a one-line convenience specific to this nav bar. Any future top-level feature (e.g. if AI Summarization ever became its own tab, rather than reached from within Article List) adds a third `NavigationBarItem` here rather than introducing a different navigation pattern.
 
 ## External APIs
 

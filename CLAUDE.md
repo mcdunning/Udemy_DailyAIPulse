@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Read `docs/PROJECT_STATUS.md` first, at the start of any session — it's a running handoff summary (current state, files touched, mistakes to avoid, open problems) meant to be enough by itself to work productively without re-deriving context. Update it, following the rules at the top of that file, after finishing significant work (a feature, a merged PR, a major fix).
 
+## Workflow
+
+- **Design doc before code.** Every feature planning/brainstorming session must produce a written design doc under `docs/superpowers/specs/` that the user has explicitly approved before any code is written — even for changes that would otherwise look small or "bounded." If the work is for an existing feature, update that feature's existing spec doc rather than creating a new one; create a new doc only when the work is for a genuinely new feature. If the decision is cross-cutting/shared-architecture (affects multiple features, or a file the architecture doc already owns, e.g. `navigation/AppNavigation.kt` or `core/`), fold it directly into `docs/superpowers/specs/2026-09-12-architecture-design.md` (dated inline, e.g. "**Added YYYY-MM-DD**") rather than creating a standalone spec file for it.
+- **Feature branch + PR, always.** All work happens on a feature branch; never commit directly to `main`. Open a PR and get it reviewed/approved before merging.
+- **Answer every PR review question on the PR.** When a reviewer leaves a question in a PR comment, reply to it directly on the PR (e.g. `gh pr comment`) — not only in chat with the user.
+
 ## Commands
 
 ```bash

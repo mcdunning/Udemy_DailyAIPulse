@@ -241,7 +241,7 @@ Shared across every feature that calls NewsAPI — a feature's own Hilt module (
 
 **Generic:** Hilt, Kotlin Coroutines, Timber
 
-**UI:** Jetpack Compose, Material 3, Navigation Compose, Hilt Navigation Compose, StateFlow, Coil (image loading)
+**UI:** Jetpack Compose, Material 3, Navigation Compose, Hilt Navigation Compose, StateFlow, Coil (image loading), Compose Material Icons (`material-icons-core` — see note below)
 
 **Presentation:** StateFlow
 
@@ -278,7 +278,10 @@ Added to `gradle/libs.versions.toml`, `build.gradle.kts`, and `app/build.gradle.
 | Core library desugaring (`com.android.tools:desugar_jdk_libs`) | 2.1.5 |
 | MockK | 1.14.11 |
 | Turbine | 1.2.1 |
+| Compose Material Icons Core (`androidx.compose.material:material-icons-core`) | BOM-managed (no separate version) |
 | kotlinx-coroutines-test | 1.10.2 (matches `kotlinx-coroutines-android`, pinned for the same Kotlin-`2.2.10`-compatibility reason) |
+
+**Added 2026-09-17**, during the navigation shell's implementation (see `docs/superpowers/specs/2026-09-16-navigation-shell-design.md`): `androidx.compose.material:material-icons-core` had to be added as an explicit dependency to resolve `Icons.*` references (e.g. `Icons.Filled.Home`) — `material3` does **not** transitively pull in even the base icon set. Any feature using a Material icon needs this dependency present; it's already added. This project intentionally does not add `material-icons-extended` (the much larger full icon set) — the base `material-icons-core` set has been sufficient so far.
 
 Two judgment calls worth flagging so they don't read as stale later:
 - **OkHttp/Retrofit** are pinned to `4.12.0`/`3.0.0` rather than OkHttp's still-alpha 5.x line — Retrofit's own latest stable (`3.0.0`) itself depends on OkHttp 4.12, so this keeps the pair aligned with what Retrofit was actually built and tested against.

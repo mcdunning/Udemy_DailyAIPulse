@@ -7,7 +7,7 @@ A native Android MVP that shows a daily pulse of technology news, pulled from [N
 Built as three independent features, one at a time:
 
 1. **Article List** — paginated list of technology headlines, with loading/empty/error states. ✅ Implemented.
-2. **Source List** — list of the article sources. Planned.
+2. **Source List** — list of technology news sources, with name/description per item. ✅ Implemented.
 3. **AI Summarization** — AI-generated summaries of articles. Planned.
 
 ## Architecture
@@ -55,3 +55,5 @@ It's picked up automatically at build time and exposed as `BuildConfig.NEWS_API_
 - `docs/superpowers/specs/2026-09-12-architecture-design.md` — shared architecture, tech stack, cross-cutting conventions.
 - `docs/superpowers/specs/2026-09-12-article-list-design.md` — Article List feature spec.
 - `docs/superpowers/plans/2026-09-13-article-list-implementation.md` — Article List implementation plan.
+- `docs/superpowers/specs/2026-09-17-source-list-design.md` — Source List feature spec.
+- `docs/superpowers/plans/2026-09-18-source-list.md` — Source List implementation plan.

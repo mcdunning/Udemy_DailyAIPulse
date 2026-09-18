@@ -6,7 +6,7 @@ Running handoff summary of this project's current state. Read this first when st
 
 Update this document after completing significant work (finishing a feature, merging a PR, resolving a major issue). Replace the content below entirely — don't append a history log. Follow these rules exactly:
 
-- **Also validate all other reference documents in the same change.** Check `README.md` and everything under `docs/superpowers/specs/` and `docs/superpowers/plans/` for stale mentions of a feature's old status (e.g. "planned", "blank placeholder", "not yet built", a package-layout diagram or doc-index list missing the finished feature) and fix them — don't wait to be asked.
+- **Also validate all other reference documents in the same change.** Check `README.md` and everything under `docs/superpowers/specs/` for stale mentions of a feature's old status (e.g. "planned", "blank placeholder", "not yet built", a package-layout diagram or doc-index list missing the finished feature) and fix them — don't wait to be asked. Exclude `docs/superpowers/plans/`: implementation plans are point-in-time task instructions, not living reference docs.
 - Exactly three paragraphs. No more, no fewer.
 - Facts only — no assumptions, theories, or speculation about why something happened or what might be true.
 - Written as instructions to another developer, as if this document were the *only* context they would get.

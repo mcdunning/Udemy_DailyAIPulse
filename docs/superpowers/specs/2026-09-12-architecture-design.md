@@ -42,9 +42,9 @@ com.dailyaipulse/
 │   ├── presentation/  # ArticleListViewModel, ArticleListUiState, Article (presentation model)
 │   └── data/          # ArticleData, ArticleApiService, ArticleRepository, ArticleModule (Hilt)
 ├── sources/
-│   ├── ui/            # SourceListScreen — currently a blank placeholder (added 2026-09-17)
-│   ├── presentation/  # not yet built — pending Source List's own design spec
-│   └── data/          # not yet built — pending Source List's own design spec
+│   ├── ui/            # SourceListItem, SourceListContent, SourceListScreen
+│   ├── presentation/  # SourceListViewModel, SourceListUiState, Source (presentation model)
+│   └── data/          # SourceData, SourceApiService, SourceRepository, SourceModule (Hilt)
 ├── summary/
 │   ├── ui/
 │   ├── presentation/
@@ -302,3 +302,4 @@ Each layer is independently testable given the separation above:
 
 Feature-specific details (exact endpoints, request params, response shapes, UI) live in each feature's own design spec:
 - Article List: `docs/superpowers/specs/2026-09-12-article-list-design.md`
+- Source List: `docs/superpowers/specs/2026-09-17-source-list-design.md`

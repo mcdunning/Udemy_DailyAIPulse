@@ -1,5 +1,6 @@
 package com.dailyaipulse.core.di
 
+import com.dailyaipulse.core.network.GeminiApiKeyInterceptor
 import com.dailyaipulse.core.network.NewsApiKeyInterceptor
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -34,6 +35,29 @@ object NetworkModule {
         Retrofit.Builder()
             .baseUrl("https://newsapi.org/")
             .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+
+    // @GeminiRetrofit qualifies BOTH providers below, not just the Retrofit one.
+    // Without it on the OkHttpClient provider too, there would be two @Provides
+    // functions both returning plain (unqualified) OkHttpClient, which Hilt
+    // rejects at compile time as a duplicate binding for the same type.
+    @Provides
+    @Singleton
+    @GeminiRetrofit
+    fun provideGeminiOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .addInterceptor(GeminiApiKeyInterceptor())
+            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            .build()
+
+    @Provides
+    @Singleton
+    @GeminiRetrofit
+    fun provideGeminiRetrofit(@GeminiRetrofit geminiOkHttpClient: OkHttpClient, moshi: Moshi): Retrofit =
+        Retrofit.Builder()
+            .baseUrl("https://generativelanguage.googleapis.com/")
+            .client(geminiOkHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
 }

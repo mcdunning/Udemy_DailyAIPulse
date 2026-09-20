@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
+    id("jacoco")
 }
 
 android {
@@ -32,6 +33,7 @@ android {
 
         debug {
             buildConfigField("String", "NEWS_API_KEY", "\"${project.findProperty("NEWS_API_KEY") ?: ""}\"")
+            enableUnitTestCoverage = true
         }
     }
     compileOptions {
@@ -102,4 +104,43 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// Coverage report for the debug unit test suite. Excludes generated code
+// (Hilt, Moshi adapters, BuildConfig/R/Manifest, Compose preview
+// singletons) so the percentage reflects hand-written code, not boilerplate.
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+    group = "Reporting"
+    description = "Generates a JaCoCo coverage report for the debug unit test suite."
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    val fileFilter = listOf(
+        "**/R.class", "**/R\$*.class", "**/BuildConfig.*", "**/Manifest*.*",
+        "android/**/*.*",
+        "**/*_Hilt*.*", "**/Hilt_*.*", "**/*_Factory.*", "**/*_MembersInjector.*",
+        "**/*_HiltModules*.*", "**/Dagger*.*", "**/*Module.class", "**/*Module\$*.class",
+        "**/*JsonAdapter.*",
+        "**/ComposableSingletons\$*.*",
+        "hilt_aggregated_deps/**/*.*", "dagger/**/*.*", "**/*_GeneratedInjector.*"
+    )
+
+    val kotlinClasses = fileTree("${layout.buildDirectory.get()}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes") {
+        exclude(fileFilter)
+    }
+    val javaClasses = fileTree("${layout.buildDirectory.get()}/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
+        exclude(fileFilter)
+    }
+
+    classDirectories.setFrom(files(kotlinClasses, javaClasses))
+    sourceDirectories.setFrom(files("$projectDir/src/main/java"))
+    executionData.setFrom(
+        fileTree(layout.buildDirectory.get()) {
+            include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+        }
+    )
 }

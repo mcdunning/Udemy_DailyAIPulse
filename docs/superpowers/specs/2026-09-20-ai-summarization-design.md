@@ -37,7 +37,7 @@ Both fields are already present in NewsAPI's `/v2/top-headlines` response; they 
 
 **Provider:** [Gemini API](https://ai.google.dev/) (Google AI Studio), free tier.
 
-- **Endpoint:** `POST v1beta/models/{model}:generateContent` (e.g. `model = "gemini-2.0-flash"`)
+- **Endpoint:** `POST v1beta/models/{model}:generateContent` (e.g. `model = "gemini-3.6-flash"`)
 - **Auth:** API key via `x-goog-api-key` header (different from NewsAPI's `X-Api-Key` — a separate interceptor is needed; see `core/di` below). Key stored as `GEMINI_API_KEY` in the developer's global `~/.gradle/gradle.properties`, exposed via `BuildConfig`, same pattern as `NEWS_API_KEY`.
 - **Request shape** (fields relevant to this feature):
 
@@ -161,7 +161,7 @@ data class SummaryResponseData(
 interface GeminiApiService {
     // Auth: the Gemini API key is attached automatically by GeminiApiKeyInterceptor
     // (see core/network) — no key param needed on this call.
-    @POST("v1beta/models/gemini-2.0-flash:generateContent")
+    @POST("v1beta/models/gemini-3.6-flash:generateContent")
     suspend fun generateContent(@Body request: SummaryRequestData): SummaryResponseData
 }
 ```

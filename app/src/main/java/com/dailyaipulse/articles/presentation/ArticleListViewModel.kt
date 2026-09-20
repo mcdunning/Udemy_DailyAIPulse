@@ -75,9 +75,16 @@ class ArticleListViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val text = summaryRepository.summarize(article.title, article.description, article.content)
-                emit(loadingState.copy(summaries = loadingState.summaries + (article.url to SummaryUiState.Success(text))))
+                // Re-read the current state rather than building off the captured
+                // loadingState snapshot: if another article's summarize() call is
+                // also in flight concurrently, it may have emitted its own Loading
+                // entry onto the map after this snapshot was taken. Building off
+                // the stale snapshot here would silently erase that entry.
+                val current = _uiState.value as ArticleListUiState.Success
+                emit(current.copy(summaries = current.summaries + (article.url to SummaryUiState.Success(text))))
             } catch (e: Exception) {
-                emit(loadingState.copy(summaries = loadingState.summaries + (article.url to SummaryUiState.Error(e.toUserMessage()))))
+                val current = _uiState.value as ArticleListUiState.Success
+                emit(current.copy(summaries = current.summaries + (article.url to SummaryUiState.Error(e.toUserMessage()))))
             }
         }
     }

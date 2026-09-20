@@ -222,4 +222,62 @@ class ArticleListViewModelTest {
         }
         coVerify(exactly = 1) { summaryRepository.summarize(any(), any(), any()) }
     }
+
+    @Test
+    fun `summarize of two different articles concurrently resolves both without clobbering`() = runTest(testDispatcher) {
+        val twoArticles = listOf(
+            ArticleData(
+                title = "Article A",
+                description = "Desc A",
+                imageUrl = "https://img/a.png",
+                date = "2026-09-13T11:59:30Z",
+                content = "Content A",
+                url = "https://example.com/article-a"
+            ),
+            ArticleData(
+                title = "Article B",
+                description = "Desc B",
+                imageUrl = "https://img/b.png",
+                date = "2026-09-13T11:59:30Z",
+                content = "Content B",
+                url = "https://example.com/article-b"
+            )
+        )
+        val repository = mockk<ArticleRepository>()
+        val summaryRepository = mockk<SummaryRepository>()
+        coEvery { repository.getTopHeadlines(page = 1) } returns twoArticles
+        coEvery { summaryRepository.summarize("Article A", "Desc A", "Content A") } returns "Summary A"
+        coEvery { summaryRepository.summarize("Article B", "Desc B", "Content B") } returns "Summary B"
+        val viewModel = ArticleListViewModel(repository, summaryRepository)
+
+        viewModel.uiState.test {
+            assertEquals(ArticleListUiState.Loading, awaitItem())
+            val initial = awaitItem() as ArticleListUiState.Success
+            val articleA = initial.articles[0]
+            val articleB = initial.articles[1]
+
+            viewModel.summarize(articleA)
+            viewModel.summarize(articleB)
+
+            // Both summarize() calls are in flight concurrently, and MutableStateFlow
+            // conflates rapid updates, so the exact number of intermediate emissions
+            // isn't guaranteed. Drain items until BOTH articles have resolved to a
+            // terminal Success state rather than asserting on an exact emission count
+            // — this is what actually exercises the bug: with the old (buggy) code,
+            // one article's completion would overwrite the other's still-pending
+            // Loading entry using a stale captured snapshot, so this loop would never
+            // terminate and the test would time out.
+            var latest: ArticleListUiState.Success
+            do {
+                latest = awaitItem() as ArticleListUiState.Success
+            } while (
+                latest.summaries[articleA.url] !is SummaryUiState.Success ||
+                latest.summaries[articleB.url] !is SummaryUiState.Success
+            )
+
+            assertEquals(SummaryUiState.Success("Summary A"), latest.summaries[articleA.url])
+            assertEquals(SummaryUiState.Success("Summary B"), latest.summaries[articleB.url])
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }

@@ -26,10 +26,24 @@ class ArticleListViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val page1 = listOf(
-        ArticleData(title = "Page 1 Article", description = "Desc", imageUrl = "https://img/1.png", date = "2026-09-13T11:59:30Z")
+        ArticleData(
+            title = "Page 1 Article",
+            description = "Desc",
+            imageUrl = "https://img/1.png",
+            date = "2026-09-13T11:59:30Z",
+            content = "Truncated content",
+            url = "https://example.com/page-1-article"
+        )
     )
     private val page2 = listOf(
-        ArticleData(title = "Page 2 Article", description = "Desc", imageUrl = "https://img/2.png", date = "2026-09-13T11:59:30Z")
+        ArticleData(
+            title = "Page 2 Article",
+            description = "Desc",
+            imageUrl = "https://img/2.png",
+            date = "2026-09-13T11:59:30Z",
+            content = "Truncated content",
+            url = "https://example.com/page-2-article"
+        )
     )
 
     @Before

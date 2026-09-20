@@ -98,7 +98,9 @@ private val previewArticle = Article(
     title = "Sample Headline About Technology",
     description = "A short sample description of the article content, for preview purposes.",
     imageUrl = null,
-    date = "Sep 13, 2026"
+    date = "Sep 13, 2026",
+    content = "Sample truncated article content for preview purposes...",
+    url = "https://example.com/sample-article"
 )
 
 @Preview(showBackground = true)

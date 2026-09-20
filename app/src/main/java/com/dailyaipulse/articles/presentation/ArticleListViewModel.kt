@@ -69,6 +69,8 @@ class ArticleListViewModel @Inject constructor(
         title = title,
         description = description,
         imageUrl = imageUrl,
-        date = formatDisplayDate(date)
+        date = formatDisplayDate(date),
+        content = content,
+        url = url
     )
 }

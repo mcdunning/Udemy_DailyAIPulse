@@ -18,7 +18,9 @@ class ArticleListContentTest {
         title = "Some Headline",
         description = "Some description",
         imageUrl = null,
-        date = "Sep 13, 2026"
+        date = "Sep 13, 2026",
+        content = "Some truncated content",
+        url = "https://example.com/some-headline"
     )
 
     @Test

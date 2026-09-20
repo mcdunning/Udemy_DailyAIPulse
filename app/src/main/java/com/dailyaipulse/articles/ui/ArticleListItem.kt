@@ -10,6 +10,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -94,11 +95,20 @@ private fun SummarySection(summaryState: SummaryUiState, onSummarize: () -> Unit
             )
         }
         is SummaryUiState.Success -> {
-            Text(
-                text = summaryState.text,
-                style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+            // Same secondaryContainer tone as the Summarize button, so the returned text
+            // visually reads as the result of that action rather than unrelated body copy.
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
-            )
+            ) {
+                Text(
+                    text = summaryState.text,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
         }
         is SummaryUiState.Error -> {
             Column(modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)) {

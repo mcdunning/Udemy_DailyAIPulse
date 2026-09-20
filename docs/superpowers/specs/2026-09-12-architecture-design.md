@@ -355,6 +355,16 @@ Each layer is independently testable given the separation above:
 
 (Detailed test plans belong in each feature's own design spec, once that feature's behavior is fully defined.)
 
+### Minimum Coverage Requirement
+
+**Added 2026-09-20.** A minimum **80% combined instruction coverage** (unit tests + instrumented Compose UI tests together) is required before a release build ships:
+
+- `./gradlew jacocoFullTestReport` merges `testDebugUnitTest` and `connectedDebugAndroidTest` coverage into one report and shows a PASS/FAIL note against the 80% minimum directly in the HTML output — informational only, doesn't fail the build.
+- `./gradlew assembleRelease` / `bundleRelease` enforce the same 80% minimum for real, via a `jacocoCoverageVerification` task wired as their dependency — a release build fails outright if coverage is under the bar.
+- `./gradlew jacocoTestReport` (unit tests only, no device required) is unaffected by this requirement and stays available for quick local iteration; it's not what the 80% bar is measured against, since it structurally excludes the instrumented suite.
+
+See `app/build.gradle.kts` for the exact task wiring.
+
 ## Feature Specs
 
 Feature-specific details (exact endpoints, request params, response shapes, UI) live in each feature's own design spec:

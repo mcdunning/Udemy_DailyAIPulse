@@ -98,6 +98,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @GeminiRetrofit
     fun provideGeminiOkHttpClient(): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(GeminiApiKeyInterceptor())
@@ -107,7 +108,7 @@ object NetworkModule {
     @Provides
     @Singleton
     @GeminiRetrofit
-    fun provideGeminiRetrofit(geminiOkHttpClient: OkHttpClient, moshi: Moshi): Retrofit =
+    fun provideGeminiRetrofit(@GeminiRetrofit geminiOkHttpClient: OkHttpClient, moshi: Moshi): Retrofit =
         Retrofit.Builder()
             .baseUrl("https://generativelanguage.googleapis.com/")
             .client(geminiOkHttpClient)
@@ -116,7 +117,9 @@ object NetworkModule {
 }
 ```
 
-`SummaryModule` (in `summary/data/`) injects the `@GeminiRetrofit`-qualified instance to build `GeminiApiService`, the same way `ArticleModule`/`SourceModule` use the unqualified (NewsAPI) one.
+`@GeminiRetrofit` qualifies **both** `provideGeminiOkHttpClient()` and `provideGeminiRetrofit()` — not just the latter. Without it on the `OkHttpClient` provider too, there would be two `@Provides` functions both returning plain (unqualified) `OkHttpClient`, which Hilt rejects at compile time as a duplicate binding for the same type.
+
+`SummaryModule` (in `summary/data/`) injects the `@GeminiRetrofit`-qualified `Retrofit` to build `GeminiApiService`, the same way `ArticleModule`/`SourceModule` use the unqualified (NewsAPI) one.
 
 ### `core/network/GeminiApiKeyInterceptor`
 

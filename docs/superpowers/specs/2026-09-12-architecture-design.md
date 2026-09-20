@@ -59,6 +59,61 @@ com.dailyaipulse/
 └── MainActivity.kt        # single Activity — calls AppNavigation()
 ```
 
+## Architecture Diagram
+
+**Added 2026-09-20**, per PR review feedback: a component/data-flow view of how a screen's tap turns into a network call and back, and how the pieces above wire together across features.
+
+```mermaid
+flowchart TD
+    subgraph UI["UI Layer (Compose)"]
+        AScreen[ArticleListScreen]
+        AItem["ArticleListItem<br/>(Summarize button)"]
+        SScreen[SourceListScreen]
+    end
+
+    subgraph Presentation["Presentation Layer"]
+        AVM[ArticleListViewModel]
+        SVM[SourceListViewModel]
+    end
+
+    subgraph Data["Data Layer"]
+        ARepo[ArticleRepository]
+        SRepo[SourceRepository]
+        SumRepo[SummaryRepository]
+        AApi[ArticleApiService]
+        SApi[SourceApiService]
+        GApi[GeminiApiService]
+    end
+
+    subgraph Core["core/di + core/network"]
+        Retrofit["Retrofit + OkHttpClient<br/>(X-Api-Key interceptor)"]
+        GeminiRetrofit["GeminiRetrofit-qualified<br/>Retrofit + OkHttpClient<br/>(x-goog-api-key interceptor)"]
+    end
+
+    AScreen -->|collects StateFlow| AVM
+    AItem -.->|onSummarize tap| AVM
+    SScreen -->|collects StateFlow| SVM
+
+    AVM -.->|UiState back to screen| AScreen
+    AVM --> ARepo
+    AVM -.->|cross-feature dependency:<br/>AI Summarization has no<br/>ViewModel of its own| SumRepo
+    SVM --> SRepo
+    SVM -.->|UiState back to screen| SScreen
+
+    ARepo --> AApi
+    SRepo --> SApi
+    SumRepo --> GApi
+
+    AApi --> Retrofit
+    SApi --> Retrofit
+    GApi --> GeminiRetrofit
+
+    Retrofit -->|HTTPS| NewsAPI[("NewsAPI.org")]
+    GeminiRetrofit -->|HTTPS| Gemini[("Gemini API")]
+```
+
+Reading it: a screen collects its ViewModel's `StateFlow` and renders whatever `UiState` comes back (solid arrows are direct calls; dashed arrows are the reverse data flow or a cross-cutting exception). Every feature's Repository is stateless and calls its own `ApiService` directly — no shared base classes, no domain layer between them. `core/di` provides exactly two `Retrofit`/`OkHttpClient` pairs (unqualified for NewsAPI, `@GeminiRetrofit`-qualified for Gemini), and every feature's Hilt module builds its own `ApiService` from whichever one it needs. The one deliberate exception to "each feature only touches its own Repository" is `ArticleListViewModel` calling `SummaryRepository` directly, since AI Summarization has no screen or ViewModel of its own (see the Package Layout exception above).
+
 ## Layer Responsibilities
 
 ### UI Layer (`ui/`)

@@ -57,8 +57,7 @@ It's picked up automatically at build time and exposed as `BuildConfig.NEWS_API_
 
 - `docs/superpowers/specs/2026-09-12-architecture-design.md` — shared architecture, tech stack, cross-cutting conventions.
 - `docs/superpowers/specs/2026-09-12-article-list-design.md` — Article List feature spec.
-- `docs/superpowers/plans/2026-09-13-article-list-implementation.md` — Article List implementation plan.
 - `docs/superpowers/specs/2026-09-17-source-list-design.md` — Source List feature spec.
-- `docs/superpowers/plans/2026-09-18-source-list.md` — Source List implementation plan.
 - `docs/superpowers/specs/2026-09-20-ai-summarization-design.md` — AI Summarization feature spec.
-- `docs/superpowers/plans/2026-09-20-ai-summarization.md` — AI Summarization implementation plan.
+
+Implementation plans under `docs/superpowers/plans/` are kept for historical/bug-investigation reference, not as a living index — point other engineers at the design specs above instead.

@@ -52,7 +52,8 @@ It's picked up automatically at build time and exposed as `BuildConfig.NEWS_API_
 ./gradlew connectedDebugAndroidTest  # Compose UI tests (requires a connected device/emulator)
 ./gradlew installDebug           # install on a connected device/emulator
 ./gradlew jacocoTestReport       # unit test coverage only, no device required (app/build/reports/jacoco/jacocoTestReport/html/index.html)
-./gradlew jacocoFullTestReport   # unit + instrumented coverage combined, requires a connected device/emulator (app/build/reports/jacoco/jacocoFullTestReport/html/index.html)
+./gradlew jacocoFullTestReport   # unit + instrumented coverage combined, requires a connected device/emulator (app/build/reports/jacoco/jacocoFullTestReport/html/index.html); its own report shows a PASS/FAIL note against the 80% minimum, informational only
+./gradlew assembleRelease         # release build; enforces the same 80% minimum via jacocoCoverageVerification and fails if under it (see the report above for details) — also requires a connected device/emulator
 ```
 
 ## Project docs

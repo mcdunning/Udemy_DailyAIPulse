@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -38,14 +39,16 @@ fun ArticleListItem(
             .clickable(onClick = onOpenArticle)
     ) {
         Column {
-            AsyncImage(
-                model = article.imageUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-                contentScale = ContentScale.Crop
-            )
+            if (article.imageUrl != null) {
+                AsyncImage(
+                    model = article.imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
             Text(
                 text = article.title,
                 style = MaterialTheme.typography.titleMedium,
@@ -77,7 +80,8 @@ private fun SummarySection(summaryState: SummaryUiState, onSummarize: () -> Unit
         is SummaryUiState.Idle -> {
             Button(
                 onClick = onSummarize,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                colors = summarizeButtonColors(),
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
             ) {
                 Text("Summarize")
             }
@@ -85,7 +89,7 @@ private fun SummarySection(summaryState: SummaryUiState, onSummarize: () -> Unit
         is SummaryUiState.Loading -> {
             CircularProgressIndicator(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
                     .testTag("summaryLoading")
             )
         }
@@ -93,22 +97,32 @@ private fun SummarySection(summaryState: SummaryUiState, onSummarize: () -> Unit
             Text(
                 text = summaryState.text,
                 style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
             )
         }
         is SummaryUiState.Error -> {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)) {
                 Text(
                     text = summaryState.message,
                     style = MaterialTheme.typography.bodySmall
                 )
-                Button(onClick = onSummarize) {
+                Button(onClick = onSummarize, colors = summarizeButtonColors()) {
                     Text("Retry summarize")
                 }
             }
         }
     }
 }
+
+// A softer, tonal color (secondaryContainer) rather than Button's default primary-colored
+// CTA styling — reads as a distinct "AI assist" affordance alongside the article's own
+// content instead of competing with it, and stays derived from the app's active color
+// scheme (including dynamic color on Android 12+) rather than a hardcoded color.
+@Composable
+private fun summarizeButtonColors() = ButtonDefaults.buttonColors(
+    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+)
 
 private val previewArticle = Article(
     title = "Sample Headline About Technology",

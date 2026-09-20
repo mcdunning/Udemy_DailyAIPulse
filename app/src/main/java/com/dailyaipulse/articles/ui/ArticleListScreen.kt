@@ -15,6 +15,7 @@ import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dailyaipulse.articles.presentation.ArticleListViewModel
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +31,11 @@ fun ArticleListScreen(viewModel: ArticleListViewModel = hiltViewModel()) {
             onLoadNextPage = viewModel::loadNextPage,
             onSummarizeClick = viewModel::summarize,
             onOpenArticleClick = { article ->
-                context.startActivity(Intent(Intent.ACTION_VIEW, article.url.toUri()))
+                runCatching {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, article.url.toUri()))
+                }.onFailure { e ->
+                    Timber.e(e, "No activity available to open ${article.url}")
+                }
             },
             modifier = Modifier
                 .fillMaxSize()

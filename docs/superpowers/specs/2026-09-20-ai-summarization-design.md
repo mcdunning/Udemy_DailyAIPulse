@@ -21,12 +21,11 @@ Provider choice: Anthropic's Claude API (what Claude Code itself runs on) has no
 
 ```
 com.dailyaipulse.summary/
-├── ui/            # (empty — no screen; ArticleListItem in articles/ui/ renders summary state directly)
 ├── presentation/  # SummaryUiState
 └── data/          # SummaryRequestData, SummaryResponseData, GeminiApiService, SummaryRepository, SummaryModule (Hilt)
 ```
 
-`summary/ui/` stays an empty placeholder, same as how `articles/`, `sources/`, `summary/` all started as empty scaffolded directories per the architecture doc — it exists for package-layout consistency, not because it will ever hold a screen for this feature as currently scoped.
+**`summary/ui/` is intentionally omitted**, not created empty. The architecture doc's package-layout rule ("exactly 3 sub-packages: `ui`, `presentation`, `data` — no more, no fewer") assumes every feature owns a screen; AI Summarization doesn't — `ArticleListItem` in `articles/ui/` renders summary state directly (see UI Layer below), so there is no summary-specific UI code to hold a package for. Creating an empty `ui/` directory with nothing that will ever go in it would be a placeholder with no purpose, not package-layout consistency. This is a deliberate, called-out deviation for this feature only — `articles/` and `sources/` both have and use a real `ui/` package. See the architecture doc's Package Layout section (updated 2026-09-20) for the corresponding note.
 
 Two existing files change:
 - `articles/data/ArticleData` gains `content: String?` and `url: String`.

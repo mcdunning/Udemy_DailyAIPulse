@@ -35,6 +35,8 @@ These are the *general principles* commonly associated with Clean Architecture. 
 
 Top-level packaging is strictly feature-based. Each feature package contains **exactly** 3 sub-packages: `ui`, `presentation`, `data` — no more, no fewer.
 
+**Added 2026-09-20**, exception for AI Summarization: this rule assumes every feature owns a screen. AI Summarization doesn't — it's an inline enhancement to Article List's existing UI rather than a screen of its own (see `docs/superpowers/specs/2026-09-20-ai-summarization-design.md`) — so its `ui/` sub-package is omitted entirely rather than created empty. This is a deviation for that feature only; any feature that does own a screen still follows the exactly-3 rule unchanged.
+
 ```
 com.dailyaipulse/
 ├── articles/
@@ -45,10 +47,9 @@ com.dailyaipulse/
 │   ├── ui/            # SourceListItem, SourceListContent, SourceListScreen
 │   ├── presentation/  # SourceListViewModel, SourceListUiState, Source (presentation model)
 │   └── data/          # SourceData, SourceApiService, SourceRepository, SourceModule (Hilt)
-├── summary/
-│   ├── ui/
-│   ├── presentation/
-│   └── data/
+├── summary/               # no ui/ — see note below (added 2026-09-20)
+│   ├── presentation/  # SummaryUiState
+│   └── data/          # SummaryRequestData, SummaryResponseData, GeminiApiService, SummaryRepository, SummaryModule (Hilt)
 ├── core/                  # shared infrastructure only — not a feature
 │   ├── network/           # Retrofit instance, base API client config
 │   ├── di/                # shared Hilt modules (Retrofit, OkHttpClient, base network config)

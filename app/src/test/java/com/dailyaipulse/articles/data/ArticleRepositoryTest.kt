@@ -15,13 +15,17 @@ class ArticleRepositoryTest {
                 title = "Title 1",
                 description = "Desc 1",
                 imageUrl = "https://img.example/1.png",
-                date = "2026-09-13T10:00:00Z"
+                date = "2026-09-13T10:00:00Z",
+                content = "Truncated content 1",
+                url = "https://example.com/article-1"
             ),
             ArticleData(
                 title = "Title 2",
                 description = null,
                 imageUrl = null,
-                date = "2026-09-13T09:00:00Z"
+                date = "2026-09-13T09:00:00Z",
+                content = null,
+                url = "https://example.com/article-2"
             )
         )
         val apiService = mockk<ArticleApiService>()

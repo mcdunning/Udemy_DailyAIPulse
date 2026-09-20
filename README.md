@@ -35,9 +35,12 @@ This app calls NewsAPI.org, which requires an API key. Add it to your **global**
 
 ```properties
 NEWS_API_KEY=your_key_here
+GEMINI_API_KEY=your_key_here
 ```
 
 It's picked up automatically at build time and exposed as `BuildConfig.NEWS_API_KEY`.
+
+`GEMINI_API_KEY` is a free-tier key from [Google AI Studio](https://ai.google.dev/), used by the AI Summarization feature; it's exposed as `BuildConfig.GEMINI_API_KEY` the same way.
 
 > NewsAPI's free "Developer" plan only permits calls from `localhost`. This is fine for local development but not for a distributed app — see the architecture doc's "External APIs" section before shipping anywhere beyond your own device/emulator.
 

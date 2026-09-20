@@ -51,6 +51,7 @@ It's picked up automatically at build time and exposed as `BuildConfig.NEWS_API_
 ./gradlew testDebugUnitTest      # unit tests (Repository, ViewModel, date formatting, error mapping)
 ./gradlew connectedDebugAndroidTest  # Compose UI tests (requires a connected device/emulator)
 ./gradlew installDebug           # install on a connected device/emulator
+./gradlew jacocoTestReport       # unit test coverage report (app/build/reports/jacoco/jacocoTestReport/html/index.html)
 ```
 
 ## Project docs

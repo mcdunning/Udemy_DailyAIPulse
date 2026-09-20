@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.dailyaipulse.articles.data.ArticleData
 import com.dailyaipulse.articles.data.ArticleRepository
 import com.dailyaipulse.core.network.toUserMessage
+import com.dailyaipulse.summary.data.SummaryRepository
+import com.dailyaipulse.summary.presentation.SummaryUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ArticleListViewModel @Inject constructor(
-    private val articleRepository: ArticleRepository
+    private val articleRepository: ArticleRepository,
+    private val summaryRepository: SummaryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ArticleListUiState>(ArticleListUiState.Loading)
@@ -56,6 +59,25 @@ class ArticleListViewModel @Inject constructor(
                 emit(loadingState.copy(articles = loadingState.articles + nextArticles, isLoadingMore = false))
             } catch (e: Exception) {
                 emit(loadingState.copy(isLoadingMore = false, paginationError = e.toUserMessage()))
+            }
+        }
+    }
+
+    fun summarize(article: Article) {
+        val state = _uiState.value
+        if (state !is ArticleListUiState.Success) return
+        if (state.summaries[article.url] is SummaryUiState.Loading) return
+        // Set synchronously, before viewModelScope.launch — same reason as
+        // isLoadingMore in loadNextPage(): launch defers execution, so a fast
+        // double-tap would otherwise both read the stale non-Loading state.
+        val loadingState = state.copy(summaries = state.summaries + (article.url to SummaryUiState.Loading))
+        emit(loadingState)
+        viewModelScope.launch {
+            try {
+                val text = summaryRepository.summarize(article.title, article.description, article.content)
+                emit(loadingState.copy(summaries = loadingState.summaries + (article.url to SummaryUiState.Success(text))))
+            } catch (e: Exception) {
+                emit(loadingState.copy(summaries = loadingState.summaries + (article.url to SummaryUiState.Error(e.toUserMessage()))))
             }
         }
     }

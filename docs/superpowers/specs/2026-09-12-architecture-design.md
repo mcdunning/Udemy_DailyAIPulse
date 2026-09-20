@@ -30,6 +30,7 @@ These are the *general principles* commonly associated with Clean Architecture. 
 - **No shared/abstract base classes** (no `BaseViewModel`, `BaseRepository`, etc.). Each class stands on its own.
 - **No local database or on-device storage.** Data layer talks to the remote API only.
 - **No Repository interfaces.** Each feature's Repository is a single concrete class — no interface/impl split, no separate remote-data-source wrapper class. The Repository calls the Retrofit API service directly.
+- **Portrait-only for the MVP.** **Added 2026-09-20.** `MainActivity` is locked to `android:screenOrientation="portrait"` in `AndroidManifest.xml`. Screens aren't designed, previewed, or tested for landscape; revisit this (and each feature's layouts) if a future requirement needs landscape support.
 
 ## Package Layout
 

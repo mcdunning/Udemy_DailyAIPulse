@@ -67,6 +67,8 @@ data class ArticleData(
 )
 ```
 
+**Updated 2026-09-20**, for AI Summarization (`docs/superpowers/specs/2026-09-20-ai-summarization-design.md`): `ArticleData` gained `content: String?` and `url: String`, both already present in NewsAPI's response and now actually mapped — `url` is used for the article's own presentation-model identity and to open it externally, `content` is one of the summarization prompt's inputs.
+
 `imageUrl`/`date` are renamed from the raw JSON keys (`urlToImage`/`publishedAt`) via `@Json(name = ...)`, since Moshi codegen needs that annotation whenever the Kotlin property name doesn't match the JSON key. `date` stays a raw `String` (ISO 8601) here — any date parsing/formatting is a presentation-layer concern, not this data class's job.
 
 ## API Service
@@ -133,9 +135,13 @@ data class Article(
     val title: String,
     val description: String?,
     val imageUrl: String?,
-    val date: String  // formatted: relative ("2 hours ago") if <12h old, absolute ("Sep 12, 2026") otherwise
+    val date: String,  // formatted: relative ("2 hours ago") if <12h old, absolute ("Sep 12, 2026") otherwise
+    val content: String?,
+    val url: String
 )
 ```
+
+**Updated 2026-09-20**, for AI Summarization: `content`/`url` were added, matching `ArticleData` (see above) — added by that feature, not this one, but documented here since this is `Article`'s canonical definition.
 
 `date` is a display-ready `String`, not a raw date type — formatting (relative vs. absolute based on a 12-hour cutoff) happens once during `ArticleData → Article` mapping, in the ViewModel.
 
@@ -452,7 +458,7 @@ fun ArticleListScreen(viewModel: ArticleListViewModel = hiltViewModel()) {
 
 Top bar title: "Articles". No `@Preview` here — `hiltViewModel()` can't resolve a real Hilt graph in a preview, which is expected (see the architecture doc's `@Preview` guiding principle); `ArticleListContent`'s previews above already cover every visual state this screen can show.
 
-The screen is **non-interactive for the MVP** — no tap action on articles. **Future update:** tapping an article to open the full article (would require adding `url` back to `ArticleData`/`Article`) is intentionally out of scope for now and left for a later iteration.
+**Updated 2026-09-20:** the screen is no longer non-interactive. AI Summarization (`docs/superpowers/specs/2026-09-20-ai-summarization-design.md`) added a "Summarize" button to each `ArticleListItem` and made the whole card tappable to open the article's `url` externally in the device browser — the `url`-based tap action originally deferred here was implemented by that feature rather than this one.
 
 ## Build & Run Prerequisites
 

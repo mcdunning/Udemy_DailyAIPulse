@@ -8,7 +8,7 @@ Built as three independent features, one at a time:
 
 1. **Article List** — paginated list of technology headlines, with loading/empty/error states. ✅ Implemented.
 2. **Source List** — list of technology news sources, with name/description per item. ✅ Implemented.
-3. **AI Summarization** — AI-generated summaries of articles. Planned.
+3. **AI Summarization** — on-demand AI-generated article summaries via the Gemini API, plus a tap-to-open-in-browser action, both added to the existing Article List screen. ✅ Implemented.
 
 ## Architecture
 
@@ -27,7 +27,7 @@ Each feature has its own design spec under `docs/superpowers/specs/`, building o
 
 - Android Studio with AGP 9.3.2 / Kotlin 2.2.10 support
 - `minSdk` 24, `compileSdk` 37
-- A [NewsAPI.org](https://newsapi.org/) API key
+- A [NewsAPI.org](https://newsapi.org/) API key and a [Google AI Studio](https://ai.google.dev/) Gemini API key (free tier)
 
 ## Setup
 
@@ -60,3 +60,5 @@ It's picked up automatically at build time and exposed as `BuildConfig.NEWS_API_
 - `docs/superpowers/plans/2026-09-13-article-list-implementation.md` — Article List implementation plan.
 - `docs/superpowers/specs/2026-09-17-source-list-design.md` — Source List feature spec.
 - `docs/superpowers/plans/2026-09-18-source-list.md` — Source List implementation plan.
+- `docs/superpowers/specs/2026-09-20-ai-summarization-design.md` — AI Summarization feature spec.
+- `docs/superpowers/plans/2026-09-20-ai-summarization.md` — AI Summarization implementation plan.

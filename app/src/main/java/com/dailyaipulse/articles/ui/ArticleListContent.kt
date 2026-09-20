@@ -19,11 +19,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dailyaipulse.articles.presentation.Article
 import com.dailyaipulse.articles.presentation.ArticleListUiState
+import com.dailyaipulse.summary.presentation.SummaryUiState
 
 @Composable
 fun ArticleListContent(
     uiState: ArticleListUiState,
     onLoadNextPage: () -> Unit,
+    onSummarizeClick: (Article) -> Unit,
+    onOpenArticleClick: (Article) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -58,7 +61,12 @@ fun ArticleListContent(
                 } else {
                     LazyColumn {
                         itemsIndexed(uiState.articles) { index, article ->
-                            ArticleListItem(article)
+                            ArticleListItem(
+                                article = article,
+                                summaryState = uiState.summaries[article.url] ?: SummaryUiState.Idle,
+                                onSummarize = { onSummarizeClick(article) },
+                                onOpenArticle = { onOpenArticleClick(article) }
+                            )
                             if (index == uiState.articles.lastIndex && !uiState.isLoadingMore) {
                                 LaunchedEffect(Unit) { onLoadNextPage() }
                             }
@@ -106,7 +114,7 @@ private val previewArticle = Article(
 @Preview(showBackground = true)
 @Composable
 private fun ArticleListContentLoadingPreview() {
-    ArticleListContent(uiState = ArticleListUiState.Loading, onLoadNextPage = {})
+    ArticleListContent(uiState = ArticleListUiState.Loading, onLoadNextPage = {}, onSummarizeClick = {}, onOpenArticleClick = {})
 }
 
 @Preview(showBackground = true)
@@ -114,14 +122,21 @@ private fun ArticleListContentLoadingPreview() {
 private fun ArticleListContentErrorPreview() {
     ArticleListContent(
         uiState = ArticleListUiState.Error("Something went wrong.\nPlease try again."),
-        onLoadNextPage = {}
+        onLoadNextPage = {},
+        onSummarizeClick = {},
+        onOpenArticleClick = {}
     )
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun ArticleListContentEmptyPreview() {
-    ArticleListContent(uiState = ArticleListUiState.Success(articles = emptyList()), onLoadNextPage = {})
+    ArticleListContent(
+        uiState = ArticleListUiState.Success(articles = emptyList()),
+        onLoadNextPage = {},
+        onSummarizeClick = {},
+        onOpenArticleClick = {}
+    )
 }
 
 @Preview(showBackground = true)
@@ -131,10 +146,16 @@ private fun ArticleListContentSuccessPreview() {
         uiState = ArticleListUiState.Success(
             articles = listOf(
                 previewArticle,
-                previewArticle.copy(title = "Second Sample Headline", date = "3h ago")
+                previewArticle.copy(
+                    title = "Second Sample Headline",
+                    date = "3h ago",
+                    url = "https://example.com/sample-article-2"
+                )
             )
         ),
-        onLoadNextPage = {}
+        onLoadNextPage = {},
+        onSummarizeClick = {},
+        onOpenArticleClick = {}
     )
 }
 
@@ -143,7 +164,9 @@ private fun ArticleListContentSuccessPreview() {
 private fun ArticleListContentLoadingMorePreview() {
     ArticleListContent(
         uiState = ArticleListUiState.Success(articles = listOf(previewArticle), isLoadingMore = true),
-        onLoadNextPage = {}
+        onLoadNextPage = {},
+        onSummarizeClick = {},
+        onOpenArticleClick = {}
     )
 }
 
@@ -155,6 +178,26 @@ private fun ArticleListContentPaginationErrorPreview() {
             articles = listOf(previewArticle),
             paginationError = "Failed to load more"
         ),
-        onLoadNextPage = {}
+        onLoadNextPage = {},
+        onSummarizeClick = {},
+        onOpenArticleClick = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ArticleListContentSummarizedPreview() {
+    ArticleListContent(
+        uiState = ArticleListUiState.Success(
+            articles = listOf(previewArticle),
+            summaries = mapOf(
+                previewArticle.url to SummaryUiState.Success(
+                    "A concise, two-sentence AI-generated summary of the article, shown here for preview purposes."
+                )
+            )
+        ),
+        onLoadNextPage = {},
+        onSummarizeClick = {},
+        onOpenArticleClick = {}
     )
 }

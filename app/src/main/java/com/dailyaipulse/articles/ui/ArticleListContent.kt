@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dailyaipulse.articles.presentation.Article
 import com.dailyaipulse.articles.presentation.ArticleListUiState
+import com.dailyaipulse.core.GeneratedPreview
 import com.dailyaipulse.summary.presentation.SummaryUiState
 
 @Composable
@@ -113,12 +114,14 @@ private val previewArticle = Article(
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListContentLoadingPreview() {
     ArticleListContent(uiState = ArticleListUiState.Loading, onLoadNextPage = {}, onSummarizeClick = {}, onOpenArticleClick = {})
 }
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListContentErrorPreview() {
     ArticleListContent(
         uiState = ArticleListUiState.Error("Something went wrong.\nPlease try again."),
@@ -130,6 +133,7 @@ private fun ArticleListContentErrorPreview() {
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListContentEmptyPreview() {
     ArticleListContent(
         uiState = ArticleListUiState.Success(articles = emptyList()),
@@ -141,6 +145,7 @@ private fun ArticleListContentEmptyPreview() {
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListContentSuccessPreview() {
     ArticleListContent(
         uiState = ArticleListUiState.Success(
@@ -161,6 +166,7 @@ private fun ArticleListContentSuccessPreview() {
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListContentLoadingMorePreview() {
     ArticleListContent(
         uiState = ArticleListUiState.Success(articles = listOf(previewArticle), isLoadingMore = true),
@@ -172,6 +178,7 @@ private fun ArticleListContentLoadingMorePreview() {
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListContentPaginationErrorPreview() {
     ArticleListContent(
         uiState = ArticleListUiState.Success(
@@ -186,6 +193,7 @@ private fun ArticleListContentPaginationErrorPreview() {
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListContentSummarizedPreview() {
     ArticleListContent(
         uiState = ArticleListUiState.Success(

@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import com.dailyaipulse.sources.presentation.Source
 import com.dailyaipulse.sources.presentation.SourceListUiState
+import com.dailyaipulse.ui.theme.DailyAIPulseTheme
 import org.junit.Rule
 import org.junit.Test
 
@@ -21,7 +22,9 @@ class SourceListContentTest {
     @Test
     fun showsFullScreenLoadingIndicator_whenStateIsLoading() {
         composeTestRule.setContent {
-            SourceListContent(uiState = SourceListUiState.Loading)
+            DailyAIPulseTheme {
+                SourceListContent(uiState = SourceListUiState.Loading)
+            }
         }
 
         composeTestRule.onNodeWithTag("fullScreenLoading").assertExists()
@@ -30,7 +33,9 @@ class SourceListContentTest {
     @Test
     fun showsErrorMessage_whenStateIsError() {
         composeTestRule.setContent {
-            SourceListContent(uiState = SourceListUiState.Error("Something went wrong"))
+            DailyAIPulseTheme {
+                SourceListContent(uiState = SourceListUiState.Error("Something went wrong"))
+            }
         }
 
         composeTestRule.onNodeWithText("Something went wrong").assertExists()
@@ -39,7 +44,9 @@ class SourceListContentTest {
     @Test
     fun showsNoSourcesFound_whenSuccessWithEmptyList() {
         composeTestRule.setContent {
-            SourceListContent(uiState = SourceListUiState.Success(sources = emptyList()))
+            DailyAIPulseTheme {
+                SourceListContent(uiState = SourceListUiState.Success(sources = emptyList()))
+            }
         }
 
         composeTestRule.onNodeWithText("No sources found").assertExists()
@@ -48,7 +55,9 @@ class SourceListContentTest {
     @Test
     fun showsSources_whenSuccessWithSources() {
         composeTestRule.setContent {
-            SourceListContent(uiState = SourceListUiState.Success(sources = listOf(source)))
+            DailyAIPulseTheme {
+                SourceListContent(uiState = SourceListUiState.Success(sources = listOf(source)))
+            }
         }
 
         composeTestRule.onNodeWithText("TechCrunch").assertExists()

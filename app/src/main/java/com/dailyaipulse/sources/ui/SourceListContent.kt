@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dailyaipulse.core.GeneratedPreview
 import com.dailyaipulse.sources.presentation.Source
 import com.dailyaipulse.sources.presentation.SourceListUiState
 
@@ -71,24 +72,28 @@ private val previewSource = Source(
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun SourceListContentLoadingPreview() {
     SourceListContent(uiState = SourceListUiState.Loading)
 }
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun SourceListContentErrorPreview() {
     SourceListContent(uiState = SourceListUiState.Error("Something went wrong.\nPlease try again."))
 }
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun SourceListContentEmptyPreview() {
     SourceListContent(uiState = SourceListUiState.Success(sources = emptyList()))
 }
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun SourceListContentSuccessPreview() {
     SourceListContent(
         uiState = SourceListUiState.Success(

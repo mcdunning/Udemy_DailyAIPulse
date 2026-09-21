@@ -41,7 +41,7 @@ Top-level packaging is strictly feature-based. Each feature package contains **e
 ```
 com.dailyaipulse/
 ├── articles/
-│   ├── ui/            # ArticleListScreen
+│   ├── ui/            # ArticleListScreen, ArticleListContent, ArticleListItem
 │   ├── presentation/  # ArticleListViewModel, ArticleListUiState, Article (presentation model)
 │   └── data/          # ArticleData, ArticleApiService, ArticleRepository, ArticleModule (Hilt)
 ├── sources/
@@ -52,9 +52,10 @@ com.dailyaipulse/
 │   ├── presentation/  # SummaryUiState
 │   └── data/          # SummaryRequestData, SummaryResponseData, GeminiApiService, SummaryRepository, SummaryModule (Hilt)
 ├── core/                  # shared infrastructure only — not a feature
-│   ├── network/           # Retrofit instance, base API client config
-│   ├── di/                # shared Hilt modules (Retrofit, OkHttpClient, base network config)
-│   └── ui/                # shared Compose components, theme
+│   ├── network/           # NewsApiKeyInterceptor, GeminiApiKeyInterceptor, NetworkErrorMapper
+│   ├── di/                # NetworkModule (Retrofit/OkHttpClient, incl. @GeminiRetrofit-qualified pair), GeminiRetrofit qualifier
+│   └── GeneratedPreview.kt  # opts @Preview functions out of JaCoco coverage (added 2026-09-21)
+├── ui/theme/              # DailyAIPulseTheme, Color, Type — shared, not feature-scoped; a sibling of core/, not nested under it
 ├── navigation/
 │   └── AppNavigation.kt   # NavHost + route definitions
 └── MainActivity.kt        # single Activity — calls AppNavigation()
@@ -310,7 +311,7 @@ Shared across every feature that calls NewsAPI — a feature's own Hilt module (
 
 - **Gradle plugins:** Hilt Android Gradle plugin; KSP (Hilt and Moshi codegen both use KSP, not kapt); `org.jetbrains.kotlin.plugin.serialization` — required for Navigation Compose's type-safe route arguments, which use `kotlinx.serialization`. This is a *separate* serialization mechanism from Moshi: Moshi handles API JSON only, kotlinx.serialization handles nav route args only.
 - **Connective libraries:** `com.squareup.retrofit2:converter-moshi` (bridges Retrofit ↔ Moshi), `org.jetbrains.kotlinx:kotlinx-serialization-json` (nav routes), `org.jetbrains.kotlinx:kotlinx-coroutines-android` (Android dispatcher support), `com.google.dagger:hilt-android-compiler` (via ksp), `androidx.lifecycle:lifecycle-runtime-compose` (for `collectAsStateWithLifecycle()`).
-- **Manifest/code, not a dependency:** `INTERNET` permission in `AndroidManifest.xml`; a custom `Application` class annotated `@HiltAndroidApp`, registered in the manifest. (Not yet added — needed once a feature actually wires up Hilt/networking.)
+- **Manifest/code, not a dependency:** `INTERNET` permission in `AndroidManifest.xml`; a custom `Application` class annotated `@HiltAndroidApp`, registered in the manifest. (Added — `DailyAiPulseApplication`, once Article List wired up Hilt/networking.)
 - **Core library desugaring:** `minSdk = 24` is below API 26, which is required to use `java.time` (`Instant`, `Duration`, `DateTimeFormatter`) natively. Rather than avoiding `java.time` or adding a separate date library, this project uses **core library desugaring** — Google's standard recommendation for exactly this situation — via the `com.android.tools:desugar_jdk_libs` dependency (`coreLibraryDesugaring` configuration) plus `isCoreLibraryDesugaringEnabled = true` in `compileOptions`. No app code needs to know it's happening.
 
 ### Resolved Dependency Versions (added 2026-09-12)

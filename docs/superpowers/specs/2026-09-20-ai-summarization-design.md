@@ -1,7 +1,7 @@
 # AI Summarization — Feature Design
 
 **Date:** 2026-09-20
-**Status:** Design complete — pending implementation
+**Status:** Implemented (PR #11)
 **Builds on:** `docs/superpowers/specs/2026-09-12-architecture-design.md` (package layout, layering, DI, tech stack, and shared API/auth decisions all apply here and aren't repeated below) and `docs/superpowers/specs/2026-09-12-article-list-design.md` (this feature extends Article List's existing data/presentation/UI rather than introducing a new screen)
 
 ## Overview

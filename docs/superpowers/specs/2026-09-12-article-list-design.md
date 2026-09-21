@@ -1,7 +1,7 @@
 # Article List — Feature Design
 
 **Date:** 2026-09-12
-**Status:** Design complete — pending implementation
+**Status:** Implemented (PRs #1, #2)
 **Builds on:** `docs/superpowers/specs/2026-09-12-architecture-design.md` (package layout, layering, DI, tech stack, and shared API/auth decisions all apply here and aren't repeated below)
 
 ## Overview
@@ -14,12 +14,12 @@ Per the architecture doc's feature-first convention:
 
 ```
 com.dailyaipulse.articles/
-├── ui/            # ArticleListScreen
-├── presentation/  # ArticleListViewModel, ArticleListUiState, Article (presentation model)
+├── ui/            # ArticleListScreen, ArticleListContent, ArticleListItem
+├── presentation/  # ArticleListViewModel, ArticleListUiState, Article (presentation model), DateFormatter
 └── data/          # ArticleData, ArticleApiService, ArticleRepository, ArticleModule (Hilt)
 ```
 
-Package directories already scaffolded (empty, pending implementation).
+(Diagram reflects the final implemented shape — `ArticleListScreen` was later split into itself, `ArticleListContent`, and `ArticleListItem`; see "Updated 2026-09-14" below.)
 
 ## API Contract
 
@@ -460,12 +460,12 @@ Top bar title: "Articles". No `@Preview` here — `hiltViewModel()` can't resolv
 
 **Updated 2026-09-20:** the screen is no longer non-interactive. AI Summarization (`docs/superpowers/specs/2026-09-20-ai-summarization-design.md`) added a "Summarize" button to each `ArticleListItem` and made the whole card tappable to open the article's `url` externally in the device browser — the `url`-based tap action originally deferred here was implemented by that feature rather than this one.
 
-## Build & Run Prerequisites
+## Build & Run Prerequisites (resolved)
 
-Beyond this feature's own code, these app-wide pieces are required before Article List can actually run, and don't exist yet:
+This section originally listed app-wide pieces required before Article List could run, none of which existed yet at design time. All of them were added during implementation and have existed since Article List shipped (PRs #1, #2) and the navigation shell followed (PRs #3, #4):
 
 1. `INTERNET` permission in `AndroidManifest.xml`.
-2. A custom `Application` class annotated `@HiltAndroidApp`, registered in the manifest.
-3. `MainActivity` needs `@AndroidEntryPoint` and needs to call `AppNavigation()` instead of the current default template content.
-4. `AppNavigation.kt` doesn't exist yet — needs a `NavHost` with a route (e.g. `@Serializable object ArticleListRoute`) wired to `ArticleListScreen`.
-5. `Coil` and core library desugaring need to be added to `app/build.gradle.kts` (versions already resolved — see architecture doc's Tech Stack).
+2. `DailyAiPulseApplication`, a custom `Application` class annotated `@HiltAndroidApp`, registered in the manifest.
+3. `MainActivity` has `@AndroidEntryPoint` and calls `AppNavigation()`.
+4. `AppNavigation.kt` exists with a `NavHost` wiring `ArticleListRoute` to `ArticleListScreen` (and, since Source List, `SourceListRoute` to `SourceListScreen`).
+5. `Coil` and core library desugaring are both in `app/build.gradle.kts`.

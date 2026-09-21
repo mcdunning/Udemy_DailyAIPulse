@@ -1,7 +1,7 @@
 # Source List — Feature Design
 
 **Date:** 2026-09-17
-**Status:** Design complete — pending implementation
+**Status:** Implemented (PRs #6, #7)
 **Builds on:** `docs/superpowers/specs/2026-09-12-architecture-design.md` (package layout, layering, DI, tech stack, and shared API/auth decisions all apply here and aren't repeated below). Mirrors `docs/superpowers/specs/2026-09-12-article-list-design.md`'s shape closely — this feature deliberately reuses the same layers, class names, tech stack, and error handling as Article List, minus pagination (see below).
 
 ## Overview
@@ -19,7 +19,7 @@ com.dailyaipulse.sources/
 └── data/          # SourceData, SourceApiService, SourceRepository, SourceModule (Hilt)
 ```
 
-`ui/SourceListScreen.kt` already exists as a blank placeholder (added with the navigation shell) — this feature replaces its contents; `presentation/` and `data/` don't exist yet.
+`ui/SourceListScreen.kt` existed as a blank placeholder (added with the navigation shell) before this feature replaced its contents; `presentation/` and `data/` were added as part of this feature's implementation.
 
 ## API Contract
 

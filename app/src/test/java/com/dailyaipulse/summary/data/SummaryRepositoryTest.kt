@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -56,13 +57,38 @@ class SummaryRepositoryTest {
         assertFalse(prompt.contains("Content:"))
     }
 
-    @Test(expected = RuntimeException::class)
-    fun `summarize propagates exceptions from the API service`() = runTest {
+    @Test
+    fun `summarize omits whitespace-only description and content from the prompt`() = runTest {
         val apiService = mockk<GeminiApiService>()
-        coEvery { apiService.generateContent(any()) } throws RuntimeException("network error")
+        val requestSlot = slot<SummaryRequestData>()
+        coEvery { apiService.generateContent(capture(requestSlot)) } returns successResponse("A concise summary.")
         val repository = SummaryRepository(apiService)
 
-        repository.summarize(title = "Some Title", description = null, content = null)
+        repository.summarize(title = "Some Title", description = "   ", content = "\n\t ")
+
+        val prompt = requestSlot.captured.contents.first().parts.first().text
+        assertTrue(prompt.contains("Title: Some Title"))
+        assertFalse(prompt.contains("Description:"))
+        assertFalse(prompt.contains("Content:"))
+    }
+
+    @Test
+    fun `summarize propagates the exact exception thrown by the API service, unwrapped`() = runTest {
+        val apiService = mockk<GeminiApiService>()
+        // A distinct type from the IllegalStateException the repository itself throws for
+        // the "blocked" case below, so this test can't accidentally pass by matching that.
+        val expected = IllegalArgumentException("network error")
+        coEvery { apiService.generateContent(any()) } throws expected
+        val repository = SummaryRepository(apiService)
+
+        val actual = try {
+            repository.summarize(title = "Some Title", description = null, content = null)
+            null
+        } catch (e: Exception) {
+            e
+        }
+
+        assertSame(expected, actual)
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.dailyaipulse.core.di
 
+import com.dailyaipulse.BuildConfig
 import com.dailyaipulse.core.network.GeminiApiKeyInterceptor
 import com.dailyaipulse.core.network.NewsApiKeyInterceptor
 import com.squareup.moshi.Moshi
@@ -22,7 +23,9 @@ object NetworkModule {
     fun provideOkHttpClient(): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(NewsApiKeyInterceptor())
-            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+            })
             .build()
 
     @Provides
@@ -48,7 +51,9 @@ object NetworkModule {
     fun provideGeminiOkHttpClient(): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(GeminiApiKeyInterceptor())
-            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+            })
             .build()
 
     @Provides

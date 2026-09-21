@@ -22,7 +22,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.dailyaipulse.HiltTestRunner"
     }
 
     buildTypes {
@@ -107,6 +107,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
@@ -119,6 +121,7 @@ val jacocoExcludes = listOf(
     "android/**/*.*",
     "**/*_Hilt*.*", "**/Hilt_*.*", "**/*_Factory.*", "**/*_MembersInjector.*",
     "**/*_HiltModules*.*", "**/Dagger*.*", "**/*Module.class", "**/*Module\$*.class",
+    "**/*_Provide*Factory*.*",
     "**/*JsonAdapter.*",
     "**/ComposableSingletons\$*.*",
     "hilt_aggregated_deps/**/*.*", "dagger/**/*.*", "**/*_GeneratedInjector.*"

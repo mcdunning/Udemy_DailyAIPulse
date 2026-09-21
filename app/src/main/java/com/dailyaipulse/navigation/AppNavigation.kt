@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -40,12 +41,14 @@ fun AppNavigation() {
 
             NavigationBar {
                 NavigationBarItem(
+                    modifier = Modifier.testTag("tab_articles"),
                     selected = currentDestination?.hasRoute<ArticleListRoute>() == true,
                     onClick = { navController.navigateToTab(ArticleListRoute) },
                     icon = { Icon(Icons.Filled.Home, contentDescription = null) },
                     label = { Text("Articles") }
                 )
                 NavigationBarItem(
+                    modifier = Modifier.testTag("tab_sources"),
                     selected = currentDestination?.hasRoute<SourceListRoute>() == true,
                     onClick = { navController.navigateToTab(SourceListRoute) },
                     icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },

@@ -365,6 +365,11 @@ Each layer is independently testable given the separation above:
 
 See `app/build.gradle.kts` for the exact task wiring.
 
+**Added 2026-09-20 (post-MVP coverage pass).** Two conventions every feature must follow to stay above the 80% bar:
+
+- **Every `@Preview` composable function must also carry `@GeneratedPreview`** (`com.dailyaipulse.core.GeneratedPreview`). Preview functions are rendered only by Android Studio's tooling and can never execute under a unit or instrumented test, so JaCoco always reports them as missed instructions; `@GeneratedPreview` opts into JaCoco's built-in filter (any annotation whose simple name contains "Generated" is excluded from coverage) so preview-only code doesn't drag down the real percentage. Forgetting this annotation on a new preview silently lowers the project's coverage without indicating any real gap in testing.
+- **Hilt instrumented tests are supported** via a custom test runner (`app/src/androidTest/java/com/dailyaipulse/HiltTestRunner.kt`, wired as `testInstrumentationRunner` in `app/build.gradle.kts`) plus `hilt-android-testing`/`kspAndroidTest(hilt-android-compiler)`. A `@HiltAndroidTest`-annotated test using `createAndroidComposeRule<MainActivity>()` and `HiltAndroidRule` gets the real (production) Hilt graph — including real Repository/ViewModel network calls, since this project's Repository classes aren't interfaces and have no test-double bindings installed. `MainActivityTest` uses this to cover `MainActivity`, `AppNavigation`'s tab-switching, and `ArticleListScreen`/`SourceListScreen`'s wiring together in one Activity launch, asserting only on each screen's static `TopAppBar` title (tagged `"screenTitle"`) — never on network-loaded content, which would be flaky against real APIs.
+
 ## Feature Specs
 
 Feature-specific details (exact endpoints, request params, response shapes, UI) live in each feature's own design spec:

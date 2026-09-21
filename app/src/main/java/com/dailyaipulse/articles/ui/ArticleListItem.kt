@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.dailyaipulse.articles.presentation.Article
+import com.dailyaipulse.core.GeneratedPreview
 import com.dailyaipulse.summary.presentation.SummaryUiState
 
 @Composable
@@ -145,18 +146,21 @@ private val previewArticle = Article(
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListItemPreview() {
     ArticleListItem(article = previewArticle)
 }
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListItemSummaryLoadingPreview() {
     ArticleListItem(article = previewArticle, summaryState = SummaryUiState.Loading)
 }
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListItemSummarySuccessPreview() {
     ArticleListItem(
         article = previewArticle,
@@ -168,6 +172,7 @@ private fun ArticleListItemSummarySuccessPreview() {
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun ArticleListItemSummaryErrorPreview() {
     ArticleListItem(
         article = previewArticle,

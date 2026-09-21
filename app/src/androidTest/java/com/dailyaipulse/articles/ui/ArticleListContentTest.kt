@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import com.dailyaipulse.articles.presentation.Article
 import com.dailyaipulse.articles.presentation.ArticleListUiState
 import com.dailyaipulse.summary.presentation.SummaryUiState
+import com.dailyaipulse.ui.theme.DailyAIPulseTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -29,7 +30,9 @@ class ArticleListContentTest {
     @Test
     fun showsFullScreenLoadingIndicator_whenStateIsLoading() {
         composeTestRule.setContent {
-            ArticleListContent(uiState = ArticleListUiState.Loading, onLoadNextPage = {}, onSummarizeClick = {}, onOpenArticleClick = {})
+            DailyAIPulseTheme {
+                ArticleListContent(uiState = ArticleListUiState.Loading, onLoadNextPage = {}, onSummarizeClick = {}, onOpenArticleClick = {})
+            }
         }
 
         composeTestRule.onNodeWithTag("fullScreenLoading").assertExists()
@@ -38,12 +41,14 @@ class ArticleListContentTest {
     @Test
     fun showsErrorMessage_whenStateIsError() {
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Error("Something went wrong"),
-                onLoadNextPage = {},
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Error("Something went wrong"),
+                    onLoadNextPage = {},
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Something went wrong").assertExists()
@@ -52,12 +57,14 @@ class ArticleListContentTest {
     @Test
     fun showsNoArticlesFound_whenSuccessWithEmptyList() {
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(articles = emptyList()),
-                onLoadNextPage = {},
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(articles = emptyList()),
+                    onLoadNextPage = {},
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("No articles found").assertExists()
@@ -66,12 +73,14 @@ class ArticleListContentTest {
     @Test
     fun showsArticles_whenSuccessWithArticles() {
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(articles = listOf(article)),
-                onLoadNextPage = {},
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(articles = listOf(article)),
+                    onLoadNextPage = {},
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Some Headline").assertExists()
@@ -80,12 +89,14 @@ class ArticleListContentTest {
     @Test
     fun showsPaginationLoadingIndicator_whenIsLoadingMore() {
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(articles = listOf(article), isLoadingMore = true),
-                onLoadNextPage = {},
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(articles = listOf(article), isLoadingMore = true),
+                    onLoadNextPage = {},
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithTag("paginationLoading").assertExists()
@@ -95,12 +106,14 @@ class ArticleListContentTest {
     fun tappingRetryRow_invokesOnLoadNextPage_whenPaginationErrorSet() {
         var retried = false
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(articles = listOf(article), paginationError = "failed"),
-                onLoadNextPage = { retried = true },
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(articles = listOf(article), paginationError = "failed"),
+                    onLoadNextPage = { retried = true },
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Failed to load more — tap to retry").performClick()
@@ -111,12 +124,14 @@ class ArticleListContentTest {
     @Test
     fun showsSummarizeButton_whenSummaryStateIsIdle() {
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(articles = listOf(article)),
-                onLoadNextPage = {},
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(articles = listOf(article)),
+                    onLoadNextPage = {},
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Summarize").assertExists()
@@ -125,15 +140,17 @@ class ArticleListContentTest {
     @Test
     fun showsSummaryLoadingIndicator_whenSummaryStateIsLoading() {
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(
-                    articles = listOf(article),
-                    summaries = mapOf(article.url to SummaryUiState.Loading)
-                ),
-                onLoadNextPage = {},
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(
+                        articles = listOf(article),
+                        summaries = mapOf(article.url to SummaryUiState.Loading)
+                    ),
+                    onLoadNextPage = {},
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithTag("summaryLoading").assertExists()
@@ -142,15 +159,17 @@ class ArticleListContentTest {
     @Test
     fun showsSummaryText_whenSummaryStateIsSuccess() {
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(
-                    articles = listOf(article),
-                    summaries = mapOf(article.url to SummaryUiState.Success("A concise AI-generated summary."))
-                ),
-                onLoadNextPage = {},
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(
+                        articles = listOf(article),
+                        summaries = mapOf(article.url to SummaryUiState.Success("A concise AI-generated summary."))
+                    ),
+                    onLoadNextPage = {},
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("A concise AI-generated summary.").assertExists()
@@ -159,15 +178,17 @@ class ArticleListContentTest {
     @Test
     fun showsRetryButtonAndErrorMessage_whenSummaryStateIsError() {
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(
-                    articles = listOf(article),
-                    summaries = mapOf(article.url to SummaryUiState.Error("Something went wrong.\nPlease try again."))
-                ),
-                onLoadNextPage = {},
-                onSummarizeClick = {},
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(
+                        articles = listOf(article),
+                        summaries = mapOf(article.url to SummaryUiState.Error("Something went wrong.\nPlease try again."))
+                    ),
+                    onLoadNextPage = {},
+                    onSummarizeClick = {},
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Something went wrong.\nPlease try again.").assertExists()
@@ -178,12 +199,14 @@ class ArticleListContentTest {
     fun tappingSummarizeButton_invokesOnSummarizeClick_withTappedArticle() {
         var summarized: Article? = null
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(articles = listOf(article)),
-                onLoadNextPage = {},
-                onSummarizeClick = { summarized = it },
-                onOpenArticleClick = {}
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(articles = listOf(article)),
+                    onLoadNextPage = {},
+                    onSummarizeClick = { summarized = it },
+                    onOpenArticleClick = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Summarize").performClick()
@@ -196,12 +219,14 @@ class ArticleListContentTest {
         var opened: Article? = null
         var summarized: Article? = null
         composeTestRule.setContent {
-            ArticleListContent(
-                uiState = ArticleListUiState.Success(articles = listOf(article)),
-                onLoadNextPage = {},
-                onSummarizeClick = { summarized = it },
-                onOpenArticleClick = { opened = it }
-            )
+            DailyAIPulseTheme {
+                ArticleListContent(
+                    uiState = ArticleListUiState.Success(articles = listOf(article)),
+                    onLoadNextPage = {},
+                    onSummarizeClick = { summarized = it },
+                    onOpenArticleClick = { opened = it }
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("Some Headline").performClick()

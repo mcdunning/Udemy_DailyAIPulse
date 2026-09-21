@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dailyaipulse.core.GeneratedPreview
 import com.dailyaipulse.sources.presentation.Source
 
 @Composable
@@ -34,6 +35,7 @@ fun SourceListItem(source: Source, modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
+@GeneratedPreview
 private fun SourceListItemPreview() {
     SourceListItem(
         source = Source(

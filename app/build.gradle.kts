@@ -1,3 +1,5 @@
+import java.math.BigDecimal
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -36,6 +38,7 @@ android {
             buildConfigField("String", "NEWS_API_KEY", "\"${project.findProperty("NEWS_API_KEY") ?: ""}\"")
             buildConfigField("String", "GEMINI_API_KEY", "\"${project.findProperty("GEMINI_API_KEY") ?: ""}\"")
             enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
     }
     compileOptions {
@@ -108,41 +111,178 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
-// Coverage report for the debug unit test suite. Excludes generated code
-// (Hilt, Moshi adapters, BuildConfig/R/Manifest, Compose preview
-// singletons) so the percentage reflects hand-written code, not boilerplate.
+// Generated-code exclusions shared by both coverage report tasks below (Hilt,
+// Moshi adapters, BuildConfig/R/Manifest, Compose preview singletons) so the
+// percentage reflects hand-written code, not boilerplate.
+val jacocoExcludes = listOf(
+    "**/R.class", "**/R\$*.class", "**/BuildConfig.*", "**/Manifest*.*",
+    "android/**/*.*",
+    "**/*_Hilt*.*", "**/Hilt_*.*", "**/*_Factory.*", "**/*_MembersInjector.*",
+    "**/*_HiltModules*.*", "**/Dagger*.*", "**/*Module.class", "**/*Module\$*.class",
+    "**/*JsonAdapter.*",
+    "**/ComposableSingletons\$*.*",
+    "hilt_aggregated_deps/**/*.*", "dagger/**/*.*", "**/*_GeneratedInjector.*"
+)
+
+// Minimum combined (unit + instrumented) instruction coverage required for a
+// release build. Shared by jacocoFullTestReport's informational pass/fail
+// note and jacocoCoverageVerification's enforced gate below.
+val minimumCoverageRatio = 0.80
+
+fun JacocoReportBase.applyCoverageClassAndSourceDirs() {
+    val kotlinClasses = fileTree("${layout.buildDirectory.get()}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes") {
+        exclude(jacocoExcludes)
+    }
+    val javaClasses = fileTree("${layout.buildDirectory.get()}/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
+        exclude(jacocoExcludes)
+    }
+    classDirectories.setFrom(files(kotlinClasses, javaClasses))
+    sourceDirectories.setFrom(files("$projectDir/src/main/java"))
+}
+
+// Coverage report for the debug unit test suite only. No connected
+// device/emulator required — safe to run anywhere, including CI.
 tasks.register<JacocoReport>("jacocoTestReport") {
     dependsOn("testDebugUnitTest")
     group = "Reporting"
-    description = "Generates a JaCoCo coverage report for the debug unit test suite."
+    description = "Generates a JaCoCo coverage report for the debug unit test suite only (no device required)."
 
     reports {
         xml.required.set(true)
         html.required.set(true)
     }
 
-    val fileFilter = listOf(
-        "**/R.class", "**/R\$*.class", "**/BuildConfig.*", "**/Manifest*.*",
-        "android/**/*.*",
-        "**/*_Hilt*.*", "**/Hilt_*.*", "**/*_Factory.*", "**/*_MembersInjector.*",
-        "**/*_HiltModules*.*", "**/Dagger*.*", "**/*Module.class", "**/*Module\$*.class",
-        "**/*JsonAdapter.*",
-        "**/ComposableSingletons\$*.*",
-        "hilt_aggregated_deps/**/*.*", "dagger/**/*.*", "**/*_GeneratedInjector.*"
-    )
-
-    val kotlinClasses = fileTree("${layout.buildDirectory.get()}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes") {
-        exclude(fileFilter)
-    }
-    val javaClasses = fileTree("${layout.buildDirectory.get()}/intermediates/javac/debug/compileDebugJavaWithJavac/classes") {
-        exclude(fileFilter)
-    }
-
-    classDirectories.setFrom(files(kotlinClasses, javaClasses))
-    sourceDirectories.setFrom(files("$projectDir/src/main/java"))
+    applyCoverageClassAndSourceDirs()
     executionData.setFrom(
         fileTree(layout.buildDirectory.get()) {
             include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
         }
     )
+
+    // This report only covers testDebugUnitTest, so anything only exercised
+    // by the instrumented Compose UI suite (articles/ui, sources/ui,
+    // navigation, theme, core/di) reads as uncovered here even though it
+    // isn't untested — flag that directly in the report itself so the
+    // percentage isn't misread as the project's full coverage.
+    val indexHtmlFile = layout.buildDirectory.file("reports/jacoco/jacocoTestReport/html/index.html")
+    doLast {
+        val indexHtml = indexHtmlFile.get().asFile
+        if (indexHtml.exists()) {
+            val banner = "<div style=\"background:#fff3cd;border:1px solid #ffeeba;padding:12px;" +
+                "margin-bottom:16px;font-family:sans-serif;\">⚠️ This report only includes " +
+                "unit test coverage (<code>testDebugUnitTest</code>). It does not include this " +
+                "project's instrumented Compose UI tests, so <code>articles/ui</code>, " +
+                "<code>sources/ui</code>, <code>navigation</code>, <code>theme</code>, and " +
+                "<code>core/di</code> show artificially low coverage here. Run " +
+                "<code>./gradlew jacocoFullTestReport</code> (requires a connected device/emulator) " +
+                "for coverage that includes both.</div>"
+            indexHtml.writeText(indexHtml.readText().replace("<h1>app</h1>", "<h1>app</h1>$banner"))
+        }
+    }
+}
+
+// Coverage report combining the unit test suite and the instrumented Compose
+// UI test suite, so the percentage reflects all testing written for the app.
+// Requires a connected device/emulator, since connectedDebugAndroidTest does.
+tasks.register<JacocoReport>("jacocoFullTestReport") {
+    dependsOn("testDebugUnitTest", "connectedDebugAndroidTest")
+    group = "Reporting"
+    description = "Generates a JaCoCo coverage report combining unit and instrumented tests (requires a connected device/emulator)."
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    applyCoverageClassAndSourceDirs()
+    executionData.setFrom(
+        fileTree(layout.buildDirectory.get()) {
+            include(
+                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+                "outputs/code_coverage/debugAndroidTest/connected/**/coverage.ec"
+            )
+        }
+    )
+
+    // Informational only — this task never fails the build. A release build
+    // (assembleRelease/bundleRelease) enforces the same minimumCoverageRatio
+    // for real, via jacocoCoverageVerification below.
+    val fullReportXml = layout.buildDirectory.file("reports/jacoco/jacocoFullTestReport/jacocoFullTestReport.xml")
+    val fullReportHtmlIndex = layout.buildDirectory.file("reports/jacoco/jacocoFullTestReport/html/index.html")
+    val minimumRatioForNote = minimumCoverageRatio
+    doLast {
+        val xmlFile = fullReportXml.get().asFile
+        val htmlFile = fullReportHtmlIndex.get().asFile
+        if (xmlFile.exists() && htmlFile.exists()) {
+            val counterMatches = Regex("""<counter type="INSTRUCTION" missed="(\d+)" covered="(\d+)"/>""")
+                .findAll(xmlFile.readText())
+                .toList()
+            val reportTotal = counterMatches.lastOrNull()
+            if (reportTotal != null) {
+                val missed = reportTotal.groupValues[1].toInt()
+                val covered = reportTotal.groupValues[2].toInt()
+                val ratio = covered.toDouble() / (missed + covered)
+                val percentText = "%.1f".format(ratio * 100)
+                val minimumPercentText = "%.0f".format(minimumRatioForNote * 100)
+                val note = if (ratio >= minimumRatioForNote) {
+                    "<div style=\"background:#d4edda;border:1px solid #c3e6cb;padding:12px;" +
+                        "margin-bottom:16px;font-family:sans-serif;\">✅ PASS — meets the minimum " +
+                        "coverage target: $percentText% ≥ $minimumPercentText%.</div>"
+                } else {
+                    "<div style=\"background:#f8d7da;border:1px solid #f5c6cb;padding:12px;" +
+                        "margin-bottom:16px;font-family:sans-serif;\">❌ FAIL — below the minimum " +
+                        "coverage target: $percentText% &lt; $minimumPercentText%. This is informational " +
+                        "only for a debug build; a release build (<code>assembleRelease</code>/" +
+                        "<code>bundleRelease</code>) will fail this gate via " +
+                        "<code>jacocoCoverageVerification</code>.</div>"
+                }
+                htmlFile.writeText(htmlFile.readText().replace("<h1>app</h1>", "<h1>app</h1>$note"))
+            }
+        }
+    }
+}
+
+// Enforced coverage gate: fails the build if combined (unit + instrumented)
+// instruction coverage is below minimumCoverageRatio. Wired below to run
+// before assembleRelease/bundleRelease, so a release build can't ship under
+// the minimum bar. Requires a connected device/emulator, since
+// connectedDebugAndroidTest does.
+tasks.register<JacocoCoverageVerification>("jacocoCoverageVerification") {
+    dependsOn("testDebugUnitTest", "connectedDebugAndroidTest")
+    group = "Verification"
+    description = "Fails if combined unit + instrumented coverage is below the minimum required for a release build."
+
+    applyCoverageClassAndSourceDirs()
+    executionData.setFrom(
+        fileTree(layout.buildDirectory.get()) {
+            include(
+                "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+                "outputs/code_coverage/debugAndroidTest/connected/**/coverage.ec"
+            )
+        }
+    )
+
+    violationRules {
+        rule {
+            limit {
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                minimum = BigDecimal.valueOf(minimumCoverageRatio)
+            }
+        }
+    }
+
+    val fullReportHtmlIndex = layout.buildDirectory.file("reports/jacoco/jacocoFullTestReport/html/index.html")
+    val minimumPercentForLog = "%.0f".format(minimumCoverageRatio * 100)
+    doFirst {
+        logger.lifecycle(
+            "Checking combined coverage against the $minimumPercentForLog% minimum required for a " +
+                "release build. Full report: ${fullReportHtmlIndex.get().asFile}"
+        )
+    }
+}
+
+// A release build can't ship under the minimum coverage bar.
+tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
+    dependsOn("jacocoCoverageVerification")
 }
